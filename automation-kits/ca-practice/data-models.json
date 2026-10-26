@@ -1,0 +1,65 @@
+{
+  "Clients": {
+    "columns": [
+      "client_id",
+      "name",
+      "owner",
+      "consent_status"
+    ]
+  },
+  "Leads": {
+    "columns": [
+      "lead_id",
+      "name",
+      "source",
+      "owner",
+      "status"
+    ]
+  },
+  "Documents_Tracker": {
+    "columns": [
+      "client_id",
+      "document",
+      "status",
+      "due_date",
+      "owner"
+    ]
+  },
+  "Compliance_Calendar": {
+    "columns": [
+      "client_id",
+      "item",
+      "deadline",
+      "approved",
+      "owner"
+    ]
+  },
+  "Invoices": {
+    "columns": [
+      "invoice_id",
+      "client_id",
+      "status",
+      "amount",
+      "owner"
+    ]
+  },
+  "Query_Log": {
+    "columns": [
+      "query_id",
+      "client_id",
+      "request",
+      "owner",
+      "partner_approval"
+    ]
+  },
+  "Error_Log": {
+    "columns": [
+      "error_id",
+      "type",
+      "record_id",
+      "owner",
+      "resolved"
+    ]
+  },
+  "source_note": "Seven table names are source-supported; these minimal columns are Aria-defined administrative template fields, not an exact copy of the original schema. Map firm-owned actual columns. No advice, filing or payment."
+}

@@ -1,0 +1,32 @@
+{
+  "product": "hospital-lifecycle",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "HMS/EMR/CRM and scheduling",
+      "purpose": "Supplies approved administrative status and available slot values.",
+      "required": true,
+      "clientProvides": [
+        "Vendor APIs, sandbox docs/credentials, scope approval, source-of-truth owner"
+      ],
+      "secretDestination": "Client-controlled n8n Credentials vault only.",
+      "steps": [
+        "Review all synthetic safety paths.",
+        "Connect an approved sandbox API or keep a staff handoff."
+      ]
+    },
+    {
+      "label": "Messaging/AI provider",
+      "purpose": "Optional administrative drafts and consented messages.",
+      "required": false,
+      "clientProvides": [
+        "Approved provider, supported features, consent and facility security/privacy approval"
+      ],
+      "secretDestination": "Credential vault only; not Aria’s form.",
+      "steps": [
+        "Add provider credentials in client n8n.",
+        "Keep clinical, write, and send actions under facility approval."
+      ]
+    }
+  ]
+}

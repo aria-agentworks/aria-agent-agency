@@ -1,0 +1,22 @@
+{
+  "enabled": false,
+  "client": {
+    "business_name": "",
+    "human_owner": "",
+    "timezone": "",
+    "country": "",
+    "provider_names": []
+  },
+  "workflow": {
+    "require_human_approval": true,
+    "allowed_actions": [
+      "draft_only"
+    ],
+    "daily_capacity": 5,
+    "quality_score_threshold": 45
+  },
+  "credentials": {
+    "values_excluded": true
+  },
+  "kit": "leadgen"
+}

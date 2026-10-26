@@ -1,0 +1,48 @@
+{
+  "hospital-lead-intake": {
+    "lead_id": "HOSP-DEMO-001",
+    "full_name": "Sam Rivera",
+    "phone": "+15550001003",
+    "department": "General Medicine",
+    "preferred_date": "2030-06-12",
+    "enquiry_text": "I want to book an administrative consultation.",
+    "source": "demo-form",
+    "consent_status": "granted",
+    "available_slot": {
+      "confirmed": true,
+      "start": "2030-06-12T09:30:00Z",
+      "source": "synthetic-calendar"
+    },
+    "correlation_id": "DEMO-HOSP-LEAD-001"
+  },
+  "hospital-no-show": {
+    "appointment_id": "HOSP-APPT-001",
+    "patient_name": "Sam Rivera",
+    "phone": "+15550001003",
+    "appointment_date": "2030-06-05",
+    "current_status": "no_show",
+    "already_sent": false,
+    "duplicate_found": false,
+    "consent_status": "granted",
+    "correlation_id": "DEMO-HOSP-NOSHOW-001"
+  },
+  "hospital-discharge-followup": {
+    "patient_id": "HOSP-PAT-001",
+    "approved_followup": true,
+    "discharge_status": "approved",
+    "approved_followup_date": "2030-06-20",
+    "category": "administrative follow-up",
+    "owner": "care-coordinator",
+    "feedback_rating": 2,
+    "correlation_id": "DEMO-HOSP-DISCHARGE-001"
+  },
+  "hospital-diagnostic-escalation": {
+    "diagnostic_id": "HOSP-DIAG-001",
+    "patient_id": "HOSP-PAT-001",
+    "owner": "diagnostic-review-team",
+    "review_status": "pending",
+    "test_category": "laboratory",
+    "report_text": "",
+    "correlation_id": "DEMO-HOSP-DIAG-001"
+  }
+}

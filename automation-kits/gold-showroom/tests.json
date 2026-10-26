@@ -1,0 +1,28 @@
+{
+  "cases": [
+    {
+      "id": "daily-rates-happy",
+      "select": "daily-rates",
+      "expect": "inactive, correlation_id preserved, DRAFT_ONLY or NEEDS_HUMAN_REVIEW, no external action"
+    },
+    {
+      "id": "scheme-reminder-happy",
+      "select": "scheme-reminder",
+      "expect": "inactive, correlation_id preserved, DRAFT_ONLY or NEEDS_HUMAN_REVIEW, no external action"
+    },
+    {
+      "id": "showroom-visit-happy",
+      "select": "showroom-visit",
+      "expect": "inactive, correlation_id preserved, DRAFT_ONLY or NEEDS_HUMAN_REVIEW, no external action"
+    },
+    {
+      "id": "estimate-slip-happy",
+      "select": "estimate-slip",
+      "expect": "inactive, correlation_id preserved, DRAFT_ONLY or NEEDS_HUMAN_REVIEW, no external action"
+    },
+    {
+      "id": "missing-or-stale-gate",
+      "expect": "NEEDS_HUMAN_REVIEW and no draft send"
+    }
+  ]
+}

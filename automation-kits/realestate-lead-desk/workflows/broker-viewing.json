@@ -1,0 +1,103 @@
+{
+  "name": "Broker viewing draft from confirmed slot",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "dc02d72d-4bed-4f9d-bcb5-66917371aca9",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"lead_validated\":true,\"listing_source_confirmed\":true,\"viewing_slot\":{\"source_confirmed\":true,\"start\":\"2030-05-15T10:00:00Z\"},\"broker\":\"broker-demo\",\"staff_approval\":true,\"correlation_id\":\"DEMO-RE-2\"}; const correlation_id = input.correlation_id || 'DEMO-BROKER-VIEWING'; return [{json:{...input, correlation_id, _demo:true, _scenario:'broker-viewing'}}];"
+      },
+      "id": "7b60eacc-673d-4b47-8160-c83e4d0a1b7b",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const ok=(d._validation?.status==='READY'||d.lead_validated===true)&&d.broker&&d.listing_source_confirmed===true&&d.viewing_slot?.source_confirmed===true&&d.staff_approval===true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Source-confirmed slot and staff approval present':'Require source-confirmed listing/slot and broker approval',action_draft:ok?{broker_assignment:d.broker,viewing_request:{slot:d.viewing_slot,status:'DRAFT'}}:null}}];"
+      },
+      "id": "d1f09f2e-dd5f-490c-bace-955318f9aa42",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "119f0c45-2362-48f4-8182-0eb58b46bfdf",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "619a1e26-8ef2-4f35-80d6-bb8e1ea26cfd",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

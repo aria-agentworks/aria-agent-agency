@@ -1,0 +1,32 @@
+{
+  "product": "voice-front-desk",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Indian voice/telephony provider",
+      "purpose": "Rents and routes a number through the client’s direct provider account.",
+      "required": true,
+      "clientProvides": [
+        "Provider plan, eligible number type, KYC/compliance approval, supported languages, transfer destination"
+      ],
+      "secretDestination": "Provider/API credential only in the client-owned n8n Credentials vault.",
+      "steps": [
+        "Complete KYC and rent a number with the provider.",
+        "Route synthetic calls, consent/disclosures, and human transfer before go-live."
+      ]
+    },
+    {
+      "label": "Business API / human queue",
+      "purpose": "Looks up approved business facts and hands exceptions to staff.",
+      "required": true,
+      "clientProvides": [
+        "CRM/scheduling/helpdesk API docs, allowed read/write scopes, working-hours and fallback owner"
+      ],
+      "secretDestination": "n8n Credentials vault.",
+      "steps": [
+        "Use a read-only/sandbox adapter first.",
+        "Approve required actions and transfer path with the business owner."
+      ]
+    }
+  ]
+}

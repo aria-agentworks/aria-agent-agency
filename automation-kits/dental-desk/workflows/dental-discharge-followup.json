@@ -1,0 +1,103 @@
+{
+  "name": "Dental Desk | Approved follow-up and service recovery",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a56720aa-4197-4fb4-b166-fb3cff23e5f3",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"patient_id\":\"DENTAL-PAT-001\",\"approved_followup\":true,\"discharge_status\":\"approved\",\"approved_followup_date\":\"2030-05-20\",\"category\":\"administrative check-in\",\"owner\":\"dental-coordinator\",\"feedback_rating\":2,\"correlation_id\":\"DEMO-DENTAL-DISCHARGE-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-DENTAL-DISCHARGE-FOLLOWUP-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"dental-discharge-followup\" } }];"
+      },
+      "id": "a73343d1-80c6-4666-9f73-22b6e9bc74a9",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [];\nfor (const key of [\"patient_id\", \"approved_followup_date\", \"category\", \"owner\"]) if (!String(d[key] || \"\").trim()) missing.push(key);\nconst review = missing.length > 0 || d.approved_followup !== true || d.discharge_status !== \"approved\";\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, reason: missing.length ? \"Required follow-up data is missing\" : d.approved_followup !== true ? \"Follow-up date is not approved\" : d.discharge_status !== \"approved\" ? \"Discharge is not approved\" : \"Approved administrative follow-up\"}}}];"
+      },
+      "id": "37435e43-80f6-4106-90e0-2bba81451827",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"dental-discharge-followup\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nconst recovery = ready && Number.isFinite(Number(d.feedback_rating)) && Number(d.feedback_rating) <= 2;\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: !ready, reason: ready ? \"Approved administrative task drafted; no clinical instruction\" : v.reason, action_draft: {task: ready ? {title: `Follow up: ${d.category}`, due_date: d.approved_followup_date, owner: d.owner, status: \"DRAFT\"} : null, feedback_message: ready ? \"Draft only: Please share feedback about your administrative experience through the approved channel.\" : null, service_recovery: recovery ? {queue: \"SERVICE_RECOVERY\", priority: \"high\", reason: \"Low supplied feedback rating\", requires_human: true} : null}, audit}}];"
+      },
+      "id": "1f20c415-d583-4394-8c95-d958f5359c3d",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f8439759-3bf5-42f8-aed5-dbf2c1df6eb1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

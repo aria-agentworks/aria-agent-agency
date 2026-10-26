@@ -1,0 +1,10 @@
+{
+  "property-enquiry": {
+    "enquiry_id": "PROP-DEMO-001",
+    "name": "Morgan Diaz",
+    "contact": "+15550001004",
+    "property_request": "I am looking for a two-bedroom rental near transit.",
+    "consent_status": "granted",
+    "correlation_id": "DEMO-PROP-001"
+  }
+}

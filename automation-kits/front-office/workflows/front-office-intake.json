@@ -1,0 +1,103 @@
+{
+  "name": "Front Office | Intake and safe reply",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a6cb32e6-0104-420f-8368-82a07173c66a",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"record_id\":\"FO-DEMO-001\",\"name\":\"Alex Morgan\",\"contact\":\"demo@example.test\",\"request\":\"Please tell me your opening hours.\",\"consent_status\":\"granted\",\"owner\":\"front-office\",\"correlation_id\":\"DEMO-FO-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-FRONT-OFFICE-INTAKE-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"front-office-intake\" } }];"
+      },
+      "id": "70b4a4ca-c99a-4c58-b1f8-f9538f901862",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [\"name\", \"contact\", \"request\"].filter((key) => !String(d[key] || \"\").trim());\nconst sensitive = /legal|refund|complaint|urgent|medical|emergency|password/i.test(String(d.request || \"\"));\nconst review = missing.length > 0 || sensitive || d.consent_status !== \"granted\";\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, reason: missing.length ? \"Required enquiry data is missing\" : sensitive ? \"Sensitive request needs a human\" : d.consent_status !== \"granted\" ? \"Consent is not confirmed\" : \"Administrative enquiry validated\"}}}];"
+      },
+      "id": "e92df37f-6820-4fd6-8202-d1f6522a0d5e",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"front-office-intake\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: !ready, reason: v.reason, action_draft: {reply: ready ? `Draft only: Thanks ${d.name}; a team member will follow up about your request.` : \"Route the enquiry to a human owner without making promises.\", owner: ready ? (d.owner || \"front-office\") : \"human-review\"}, audit}}];"
+      },
+      "id": "a0256632-d8b0-48d3-97ea-724eeec44698",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "db08d45d-3253-46f0-9a37-b2c9f589834a",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

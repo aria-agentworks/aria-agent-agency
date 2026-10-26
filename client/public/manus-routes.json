@@ -1,0 +1,68 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "title": "Aria Agent Agency"
+    },
+    {
+      "path": "/automations",
+      "title": "Automation Library"
+    },
+    {
+      "path": "/automations/:id",
+      "title": "Automation Details"
+    },
+    {
+      "path": "/industries",
+      "title": "Industries"
+    },
+    {
+      "path": "/industries/:id",
+      "title": "Industry Automations"
+    },
+    {
+      "path": "/implementation",
+      "title": "Implementation Request"
+    },
+    {
+      "path": "/demo",
+      "title": "Interactive Synthetic Demo"
+    },
+    {
+      "path": "/cart",
+      "title": "Your Cart"
+    },
+    {
+      "path": "/orders",
+      "title": "My Purchases"
+    },
+    {
+      "path": "/admin",
+      "title": "Private Agency Inbox"
+    },
+    {
+      "path": "/how-it-works",
+      "title": "How It Works"
+    },
+    {
+      "path": "/faq",
+      "title": "FAQs & Support"
+    },
+    {
+      "path": "/privacy",
+      "title": "Privacy Information"
+    },
+    {
+      "path": "/terms",
+      "title": "Purchase Information"
+    },
+    {
+      "path": "/voice-setup",
+      "title": "Indian Voice Number Setup"
+    },
+    {
+      "path": "/automations/:id/setup",
+      "title": "Product Installation and API Requirements"
+    }
+  ]
+}

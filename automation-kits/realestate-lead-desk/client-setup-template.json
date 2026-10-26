@@ -1,0 +1,55 @@
+{
+  "automation_id": "realestate-lead-desk",
+  "enabled": false,
+  "business": {
+    "name": "",
+    "website": "",
+    "location": "",
+    "country": "",
+    "timezone": "",
+    "industry": "realestate",
+    "languages": [],
+    "human_owner": "",
+    "human_transfer_destination": ""
+  },
+  "workflow": {
+    "daily_capacity": 5,
+    "quality_score_threshold": 45,
+    "allowed_actions": [
+      "draft_only"
+    ],
+    "require_human_approval": true,
+    "prevent_duplicate_events": true
+  },
+  "integrations": [
+    {
+      "name": "Meta Lead Ads (optional source)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "WhatsApp Business (optional channel)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "Property inventory + broker roster",
+      "required": true,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "Voice/notifications (optional)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    }
+  ],
+  "notes": "Keep workflow inactive until API permissions, consent, privacy/security review, human ownership, error handling, and test approval are complete. Never store API keys in this configuration."
+}

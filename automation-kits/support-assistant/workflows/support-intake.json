@@ -1,0 +1,103 @@
+{
+  "name": "Support Assistant | Verify and draft safe response",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d7240b6c-0e63-43c2-ab2c-795b4cd9a323",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"ticket_id\":\"SUP-DEMO-001\",\"customer_name\":\"Casey Patel\",\"request\":\"Where can I find the setup guide?\",\"verified_customer\":true,\"consent_status\":\"granted\",\"correlation_id\":\"DEMO-SUP-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-SUPPORT-INTAKE-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"support-intake\" } }];"
+      },
+      "id": "64e8ac6a-5f18-4569-8cd2-c64fb3dceb96",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [\"ticket_id\", \"customer_name\", \"request\"].filter((key) => !String(d[key] || \"\").trim());\nconst sensitive = /security|password|payment|legal|threat|emergency/i.test(String(d.request || \"\"));\nconst review = missing.length > 0 || sensitive || d.verified_customer !== true;\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, reason: missing.length ? \"Required ticket data is missing\" : sensitive ? \"Sensitive support request needs a human\" : d.verified_customer !== true ? \"Customer verification is not confirmed\" : \"Support request validated\"}}}];"
+      },
+      "id": "d40bcf84-00eb-4fad-a7c6-aedf7c4b7ef2",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"support-intake\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: !ready, reason: v.reason, action_draft: {reply: ready ? `Draft only: Hi ${d.customer_name}, we have your request and a support specialist will follow up.` : \"Do not answer automatically; assign to a human support owner.\", ticket_update: ready ? \"DRAFT\" : \"HUMAN_REVIEW\"}, audit}}];"
+      },
+      "id": "50bc12c8-2ba8-4bf5-aa3d-d72a94c75e8c",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "505b191e-76fc-4e24-accb-370a3ad9a035",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

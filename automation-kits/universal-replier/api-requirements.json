@@ -1,0 +1,76 @@
+{
+  "product": "universal-replier",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "n8n workspace",
+      "purpose": "Imports and runs the inactive workflow starters.",
+      "required": true,
+      "clientProvides": [
+        "Your client-owned n8n URL and workspace owner"
+      ],
+      "secretDestination": "No credential is required to test the synthetic starter.",
+      "steps": [
+        "Import the supplied JSON workflow.",
+        "Run the synthetic test and keep it inactive."
+      ]
+    },
+    {
+      "label": "WhatsApp Business Platform / Cloud API",
+      "purpose": "The channel the replier listens on and replies through, with a dedicated business number.",
+      "required": true,
+      "clientProvides": [
+        "Meta business verification, a WhatsApp Business Platform account, and a dedicated number",
+        "Approved message templates for follow-ups and the client-owned webhook subscription",
+        "Decision on whether per-message fees are included in the monthly fee or passed through at cost"
+      ],
+      "secretDestination": "Client-owned n8n Credentials vault only.",
+      "steps": [
+        "Connect the channel adapter to a test number first.",
+        "Run the full test pack, including handover and opt-out paths, before going live."
+      ]
+    },
+    {
+      "label": "Scheduling / calendar source (optional)",
+      "purpose": "Source of truth for open slots when the booking module is on; availability is never invented.",
+      "required": false,
+      "clientProvides": [
+        "Calendar or booking system name, API documentation, and service/provider mapping",
+        "Permitted scopes and a named booking owner"
+      ],
+      "secretDestination": "Client-owned n8n Credentials vault only.",
+      "steps": [
+        "Return source-confirmed slots only.",
+        "Test lookup misses, stale availability, and double-booking protection."
+      ]
+    },
+    {
+      "label": "AI provider (optional)",
+      "purpose": "Adds language understanding beyond the deterministic intent rules after the demo is understood.",
+      "required": false,
+      "clientProvides": [
+        "Chosen provider/model and account/API documentation",
+        "Approved prompt, data-handling policy, and cost owner"
+      ],
+      "secretDestination": "n8n Credentials vault only.",
+      "steps": [
+        "Create the provider credential in n8n.",
+        "Connect it only after the synthetic test, output schema, and prompt review are approved."
+      ]
+    },
+    {
+      "label": "Lead sheet / CRM (optional)",
+      "purpose": "Stores collected enquiry details for quote requests and lead capture, and alerts the team.",
+      "required": false,
+      "clientProvides": [
+        "Sheet or CRM name, vendor API documentation, field mapping, and permitted scopes",
+        "Team alert destination and consent/message policies"
+      ],
+      "secretDestination": "Client-owned n8n Credentials vault only.",
+      "steps": [
+        "Test a synthetic event, error path, and duplicate protection.",
+        "Verify the human alert path before activation."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,253 @@
+{
+  "front-office": {
+    "workflows": [
+      "workflows/front-office-intake.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "dental-desk": {
+    "workflows": [
+      "workflows/dental-diagnostic-escalation.json",
+      "workflows/dental-discharge-followup.json",
+      "workflows/dental-lead-intake.json",
+      "workflows/dental-no-show.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "lead-engine": {
+    "workflows": [
+      "workflows/lead-qualification.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "hospital-lifecycle": {
+    "workflows": [
+      "workflows/hospital-diagnostic-escalation.json",
+      "workflows/hospital-discharge-followup.json",
+      "workflows/hospital-lead-intake.json",
+      "workflows/hospital-no-show.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "support-assistant": {
+    "workflows": [
+      "workflows/support-intake.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "reputation-care": {
+    "workflows": [
+      "workflows/reputation-review.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "property-enquiries": {
+    "workflows": [
+      "workflows/property-enquiry.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "daily-operations": {
+    "workflows": [
+      "workflows/daily-operations-summary.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "realestate-lead-desk": {
+    "workflows": [
+      "workflows/broker-viewing.json",
+      "workflows/channel-normalization.json",
+      "workflows/followup-guard.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "config-template.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "voice-front-desk": {
+    "workflows": [
+      "workflows/call-intake.json",
+      "workflows/owner-transfer.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "config-template.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "local-site-leadgen": {
+    "workflows": [
+      "workflows/outreach-review.json",
+      "workflows/site-score-preview.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "config-template.json",
+      "data-models.json",
+      "email-template.md",
+      "original-reference-workflows.jsonc",
+      "pipeline-prompt.md",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json",
+      "website-analyzer.py"
+    ]
+  },
+  "gold-showroom": {
+    "workflows": [
+      "workflows/daily-rates.json",
+      "workflows/estimate-slip.json",
+      "workflows/scheme-reminder.json",
+      "workflows/showroom-visit.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "config-template.json",
+      "data-models.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "ca-practice": {
+    "workflows": [
+      "workflows/documents-deadline.json",
+      "workflows/invoice-status.json",
+      "workflows/partner-exception.json",
+      "workflows/support-newlead.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "config-template.json",
+      "data-models.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  },
+  "universal-replier": {
+    "workflows": [
+      "workflows/replier-booking.json",
+      "workflows/replier-followup.json",
+      "workflows/replier-handover.json",
+      "workflows/replier-intake.json"
+    ],
+    "files": [
+      "README.md",
+      "api-requirements.json",
+      "client-setup-template.json",
+      "config-template.json",
+      "operational-contract.json",
+      "prompts.md",
+      "quick-start.md",
+      "sample-payloads.json",
+      "schemas.json",
+      "tests.json"
+    ]
+  }
+}

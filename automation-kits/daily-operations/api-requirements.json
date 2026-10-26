@@ -1,0 +1,19 @@
+{
+  "product": "daily-operations",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Metrics/reporting source",
+      "purpose": "Summarizes only client-supplied reporting facts.",
+      "required": true,
+      "clientProvides": [
+        "Metric definitions, source API/export, date window, report owner"
+      ],
+      "secretDestination": "n8n Credentials vault if API-based.",
+      "steps": [
+        "Run the sample-metrics fixture.",
+        "Connect the read-only report source and verify every metric."
+      ]
+    }
+  ]
+}

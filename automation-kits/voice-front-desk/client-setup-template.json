@@ -1,0 +1,41 @@
+{
+  "automation_id": "voice-front-desk",
+  "enabled": false,
+  "business": {
+    "name": "",
+    "website": "",
+    "location": "",
+    "country": "",
+    "timezone": "",
+    "industry": "professional",
+    "languages": [],
+    "human_owner": "",
+    "human_transfer_destination": ""
+  },
+  "workflow": {
+    "daily_capacity": 5,
+    "quality_score_threshold": 45,
+    "allowed_actions": [
+      "draft_only"
+    ],
+    "require_human_approval": true,
+    "prevent_duplicate_events": true
+  },
+  "integrations": [
+    {
+      "name": "Indian voice/telephony provider",
+      "required": true,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "Business API / human queue",
+      "required": true,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    }
+  ],
+  "notes": "Keep workflow inactive until API permissions, consent, privacy/security review, human ownership, error handling, and test approval are complete. Never store API keys in this configuration."
+}

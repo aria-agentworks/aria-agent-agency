@@ -1,0 +1,47 @@
+{
+  "daily-rates": {
+    "as_of_date": "2030-01-15",
+    "rate_source": {
+      "as_of_date": "2030-01-15",
+      "gold_22k": 6500,
+      "gold_24k": 7100,
+      "silver": 80,
+      "owner_verified": true
+    },
+    "named_rate_review": "10:30 Asia/Kolkata",
+    "correlation_id": "DEMO-GOLD-1"
+  },
+  "scheme-reminder": {
+    "reference_date": "2030-01-15",
+    "next_due": "2030-01-17",
+    "opted_in": true,
+    "reminder_hour": "11:00",
+    "timezone": "Asia/Kolkata",
+    "duplicate_found": false,
+    "correlation_id": "DEMO-GOLD-2"
+  },
+  "showroom-visit": {
+    "customer_name": "Demo Customer",
+    "requested_slot": "2030-01-18T11:30:00+05:30",
+    "owner": "showroom-staff",
+    "staff_approval": true,
+    "correlation_id": "DEMO-GOLD-3"
+  },
+  "estimate-slip": {
+    "as_of_date": "2030-01-15",
+    "weight_grams": 10,
+    "rate_source": {
+      "as_of_date": "2030-01-15",
+      "gold_22k": 6500,
+      "owner_verified": true
+    },
+    "estimate_settings": {
+      "making_charge_type": "percent",
+      "making_charge_value": 10,
+      "tax_rate": 1.5,
+      "tax_basis": "metal_and_making",
+      "owner_verified": true
+    },
+    "correlation_id": "DEMO-GOLD-4"
+  }
+}

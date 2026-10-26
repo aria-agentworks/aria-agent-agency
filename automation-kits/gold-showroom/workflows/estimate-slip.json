@@ -1,0 +1,103 @@
+{
+  "name": "Deterministic estimate from rate, making charge, and tax settings",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "266a52ef-7648-4e22-a5ba-ac93c2f83862",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"as_of_date\":\"2030-01-15\",\"weight_grams\":10,\"rate_source\":{\"as_of_date\":\"2030-01-15\",\"gold_22k\":6500,\"owner_verified\":true},\"estimate_settings\":{\"making_charge_type\":\"percent\",\"making_charge_value\":10,\"tax_rate\":1.5,\"tax_basis\":\"metal_and_making\",\"owner_verified\":true},\"correlation_id\":\"DEMO-GOLD-4\"}; const correlation_id = input.correlation_id || 'DEMO-ESTIMATE-SLIP'; return [{json:{...input, correlation_id, _demo:true, _scenario:'estimate-slip'}}];"
+      },
+      "id": "2bda6abe-3faf-45b7-9f0c-72bc3640aa35",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const r=d.rate_source||{}, s=d.estimate_settings||{}; const weight=Number(d.weight_grams), rate=Number(r.gold_22k), charge=Number(s.making_charge_value), taxRate=Number(s.tax_rate); const validNumbers=[weight,rate,charge,taxRate].every(Number.isFinite)&&weight>0&&rate>0&&charge>=0&&taxRate>=0&&taxRate<=100; const validType=['percent','flat'].includes(s.making_charge_type)&&s.tax_basis==='metal_and_making'; const metal=weight*rate; const making=s.making_charge_type==='percent'?metal*charge/100:charge; const tax=taxRate/100*(metal+making); const ok=validNumbers&&validType&&Number.isFinite(metal+making+tax)&&r.owner_verified===true&&s.owner_verified===true&&Boolean(d.as_of_date)&&d.as_of_date===r.as_of_date; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Deterministic estimate from explicit owner-verified source numerics and tax basis':'Require current approved rates, valid positive weight, nonnegative charges, explicit method and approved tax basis',action_draft:ok?{estimate:{as_of_date:d.as_of_date,metal_value:metal,making_charge:making,tax_amount:tax,total:metal+making+tax},tax_note:'Showroom-provided tax settings; indicative draft only, not tax advice or a binding quote'}:null}}];"
+      },
+      "id": "3e15a934-6baa-4d23-a90f-4c629909fe3c",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "64b5280d-e8dc-48d8-a9f2-ea2bd397f5f9",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "98355a1f-5bfe-4015-8189-fb7482396469",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

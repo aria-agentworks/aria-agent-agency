@@ -1,0 +1,10 @@
+{
+  "support-intake": {
+    "ticket_id": "SUP-DEMO-001",
+    "customer_name": "Casey Patel",
+    "request": "Where can I find the setup guide?",
+    "verified_customer": true,
+    "consent_status": "granted",
+    "correlation_id": "DEMO-SUP-001"
+  }
+}

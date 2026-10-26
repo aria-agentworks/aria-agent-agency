@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {
+      "id": "channel-normalization-happy",
+      "select": "channel-normalization",
+      "expect": "inactive, correlation_id preserved, DRAFT_ONLY or NEEDS_HUMAN_REVIEW, no external action"
+    },
+    {
+      "id": "broker-viewing-happy",
+      "select": "broker-viewing",
+      "expect": "inactive, correlation_id preserved, DRAFT_ONLY or NEEDS_HUMAN_REVIEW, no external action"
+    },
+    {
+      "id": "followup-guard-happy",
+      "select": "followup-guard",
+      "expect": "inactive, correlation_id preserved, DRAFT_ONLY or NEEDS_HUMAN_REVIEW, no external action"
+    },
+    {
+      "id": "missing-or-stale-gate",
+      "expect": "NEEDS_HUMAN_REVIEW and no draft send"
+    }
+  ]
+}

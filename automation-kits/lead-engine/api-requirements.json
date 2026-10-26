@@ -1,0 +1,32 @@
+{
+  "product": "lead-engine",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Inbound lead source / CRM",
+      "purpose": "Supplies consented lead payloads and stores reviewed qualification.",
+      "required": true,
+      "clientProvides": [
+        "Form/CRM name, vendor API docs, field names, permission scopes, queue owner"
+      ],
+      "secretDestination": "n8n Credentials vault.",
+      "steps": [
+        "Import the workflow and test a synthetic lead.",
+        "Connect one approved source and one CRM adapter."
+      ]
+    },
+    {
+      "label": "AI provider (optional)",
+      "purpose": "Adds classification over supplied facts; the starter rules alone are not AI calls.",
+      "required": false,
+      "clientProvides": [
+        "Provider/model, prompt schema, data-retention policy, and budget owner"
+      ],
+      "secretDestination": "n8n Credentials vault.",
+      "steps": [
+        "Add the provider credential in n8n.",
+        "Validate structured outputs on synthetic fixtures."
+      ]
+    }
+  ]
+}

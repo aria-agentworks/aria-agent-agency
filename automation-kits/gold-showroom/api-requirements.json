@@ -1,0 +1,48 @@
+{
+  "product": "gold-showroom",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Google Sheet ratebook and client tables",
+      "purpose": "Reads owner-verified Rates, Subscribers, Scheme, and Visits data.",
+      "required": true,
+      "clientProvides": [
+        "Spreadsheet ID and approved columns/field mapping",
+        "Owner-verified date/rates and making-charge/tax settings",
+        "Showroom timezone Asia/Kolkata and named staff owner"
+      ],
+      "secretDestination": "Google OAuth/service-account credential in client-owned n8n Credentials.",
+      "steps": [
+        "Create the four named tabs and enter synthetic fixtures.",
+        "Connect the sheet read adapter and verify current-day rate freshness."
+      ]
+    },
+    {
+      "label": "Meta WhatsApp Cloud API (optional)",
+      "purpose": "Can receive opt-in customer requests and queue approved rate/reminder drafts.",
+      "required": false,
+      "clientProvides": [
+        "Business-owned WhatsApp account, Phone Number ID and approved messaging templates",
+        "System-user token (enter only in vault), opt-in list and opt-out process"
+      ],
+      "secretDestination": "Meta credential in client n8n Credentials; do not paste token in Aria form.",
+      "steps": [
+        "Complete client provider onboarding and map a secure webhook.",
+        "Keep broadcast/send nodes paused until showroom owner approval."
+      ]
+    },
+    {
+      "label": "OpenAI / approved AI provider (optional)",
+      "purpose": "Classifies bounded showroom enquiries; deterministic calculations use approved source values.",
+      "required": false,
+      "clientProvides": [
+        "Client-selected provider/model, data/privacy review and budget owner"
+      ],
+      "secretDestination": "Client n8n Credentials vault.",
+      "steps": [
+        "Add the approved provider credential.",
+        "Test unknown/stale rates, scheme and sensitive requests before use."
+      ]
+    }
+  ]
+}

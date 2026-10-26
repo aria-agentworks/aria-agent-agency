@@ -1,0 +1,28 @@
+{
+  "channel-normalization": {
+    "source": "whatsapp",
+    "name": "Demo Buyer",
+    "contact": "+15550001001",
+    "enquiry_text": "2 bedroom near transit",
+    "opt_out": false,
+    "correlation_id": "DEMO-RE-1"
+  },
+  "broker-viewing": {
+    "lead_validated": true,
+    "listing_source_confirmed": true,
+    "viewing_slot": {
+      "source_confirmed": true,
+      "start": "2030-05-15T10:00:00Z"
+    },
+    "broker": "broker-demo",
+    "staff_approval": true,
+    "correlation_id": "DEMO-RE-2"
+  },
+  "followup-guard": {
+    "followup_count": 1,
+    "max_followups": 3,
+    "opt_out": false,
+    "duplicate_found": false,
+    "correlation_id": "DEMO-RE-3"
+  }
+}

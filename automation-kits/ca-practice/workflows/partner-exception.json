@@ -1,0 +1,103 @@
+{
+  "name": "Partner exception escalation draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "5694067e-318a-465b-b714-f018a2385852",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"exception_type\":\"missing source record\",\"owner\":\"partner-demo\",\"partner_approval\":true,\"correlation_id\":\"DEMO-CA-4\"}; const correlation_id = input.correlation_id || 'DEMO-PARTNER-EXCEPTION'; return [{json:{...input, correlation_id, _demo:true, _scenario:'partner-exception'}}];"
+      },
+      "id": "7d2a8c4b-b98d-4994-9f89-913da37703cf",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const ok=d.exception_type&&d.owner&&d.partner_approval===true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Partner escalation draft approved':'Partner approval or exception owner missing',action_draft:ok?{table:'Error_Log',exception:d.exception_type,filing:false,advice:false}:null}}];"
+      },
+      "id": "4990e35a-d4f3-4f1d-bf59-8b031ccaf8c0",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "05fc7be6-2cc9-4a2f-8e93-c3e592e0e92b",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "db3d69ce-b5cb-4407-a10c-46184ce7626b",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

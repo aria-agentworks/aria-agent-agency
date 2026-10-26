@@ -1,0 +1,58 @@
+{
+  "product": "local-site-leadgen",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Prospect source (optional automation)",
+      "purpose": "Finds eligible local businesses from a permitted data source.",
+      "required": false,
+      "clientProvides": [
+        "Licensed directory or client-approved search/Maps API, local business niche, location, permitted-use terms"
+      ],
+      "secretDestination": "Provider credential in client n8n Credentials; source/analyzer local demo needs no API key.",
+      "steps": [
+        "Enter the city, niches, score threshold, and daily cap in config.json.",
+        "Supply one authorized public URL or approved prospect source."
+      ]
+    },
+    {
+      "label": "Website analyzer",
+      "purpose": "Scores mobile/responsive/site basics and extracts visible public business content.",
+      "required": true,
+      "clientProvides": [
+        "Python 3 and an authorized public business website URL; the standalone scorer uses the Python standard library"
+      ],
+      "secretDestination": "No key is required by the analyzer.",
+      "steps": [
+        "Run `python3 website-analyzer.py https://example-business.com`.",
+        "Review the score and every extracted fact before preview generation."
+      ]
+    },
+    {
+      "label": "Optional AI/site generation + hosting",
+      "purpose": "Turns reviewed business facts into a watermarked preview website.",
+      "required": false,
+      "clientProvides": [
+        "Approved site-generation tool/provider, hosting account or destination, owner permission to create/store the preview"
+      ],
+      "secretDestination": "Provider credential in client vault; do not put it in outreach messages.",
+      "steps": [
+        "Generate a preview using only reviewed facts and mark it “not the live site”.",
+        "Publish only with owner permission and a planned removal date."
+      ]
+    },
+    {
+      "label": "Optional CRM/email",
+      "purpose": "Stores a reviewed prospect/outreach draft; no email sends are wired in this kit.",
+      "required": false,
+      "clientProvides": [
+        "CRM/list owner, sender name/email/business address, recipient jurisdiction, provider documentation and approved send policy"
+      ],
+      "secretDestination": "Client’s n8n/email connector secure credential store only.",
+      "steps": [
+        "Connect a prospect log and keep send/outreach nodes paused.",
+        "Have a person review recipient eligibility, jurisdiction, message, opt-out and address before sending."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "product": "reputation-care",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Feedback/CRM/helpdesk source",
+      "purpose": "Captures consented feedback and opens a private service task.",
+      "required": true,
+      "clientProvides": [
+        "Feedback source API docs, consent rules, response policy, assigned owner"
+      ],
+      "secretDestination": "n8n Credentials vault.",
+      "steps": [
+        "Import and test synthetic ratings.",
+        "Connect the internal service queue; keep public replies manual."
+      ]
+    }
+  ]
+}

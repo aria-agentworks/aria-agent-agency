@@ -1,0 +1,103 @@
+{
+  "name": "Lead Engine | Safe qualification draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f8d823d5-5871-4be9-b711-842799c45076",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"lead_id\":\"LEAD-DEMO-001\",\"full_name\":\"Taylor Chen\",\"phone\":\"+15550001002\",\"department\":\"Sales\",\"enquiry_text\":\"I need a demo of the reporting plan.\",\"source\":\"demo-form\",\"consent_status\":\"granted\",\"available_slot\":{\"confirmed\":false},\"correlation_id\":\"DEMO-LEAD-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-LEAD-QUALIFICATION-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"lead-qualification\" } }];"
+      },
+      "id": "e8a5598e-8488-4452-8d42-627e2ba75345",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [];\nfor (const key of [\"full_name\", \"phone\", \"enquiry_text\", \"source\"]) if (!String(d[key] || \"\").trim()) missing.push(key);\nconst clinical = /diagnos|symptom|pain|bleed|urgent|emergency|medication|result|treatment/i.test(String(d.enquiry_text || \"\"));\nconst review = missing.length > 0 || clinical || d.consent_status !== \"granted\" || d.department === \"NEEDS_HUMAN_REVIEW\";\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, clinical_request: clinical, reason: missing.length ? \"Required intake data is missing\" : clinical ? \"Clinical or high-impact language needs staff review\" : d.consent_status !== \"granted\" ? \"Consent is not confirmed\" : d.department === \"NEEDS_HUMAN_REVIEW\" ? \"Department is unresolved\" : \"Validated administrative lead\"}}}];"
+      },
+      "id": "0da3a64e-3e50-44e5-ba94-b7b96c2ddf5b",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"lead-qualification\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\" && d.available_slot && d.available_slot.confirmed === true;\nconst finalStatus = ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\";\nconst reason = !ready && v.status === \"READY\" ? \"No source-confirmed synthetic slot; do not invent availability\" : v.reason;\nreturn [{json: {...d, status: finalStatus, review_required: finalStatus !== \"DRAFT_ONLY\", reason, action_draft: {lead_status: ready ? \"qualified_admin\" : \"review\", confirmed_slot: ready ? d.available_slot : null, message: ready ? `Draft only: ${d.full_name}, your ${d.department} enquiry is noted for ${d.available_slot.start}. A coordinator must confirm this through the approved system.` : \"Route to a coordinator; no appointment or outbound message was created.\"}, audit}}];"
+      },
+      "id": "36baf616-c37d-4c4e-976b-780049df1ecd",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3182e61c-1802-44bd-90e0-923bd863f64b",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

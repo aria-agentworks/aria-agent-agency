@@ -1,0 +1,17 @@
+{
+  "call-intake": {
+    "provider_event_id": "CALL-DEMO-1",
+    "summary": "Caller asks for opening hours",
+    "language": "en-IN",
+    "consent_status": "granted",
+    "disclosure_confirmed": true,
+    "owner": "front-desk",
+    "correlation_id": "DEMO-VOICE-1"
+  },
+  "owner-transfer": {
+    "transfer_destination": "front-desk-queue",
+    "owner": "manager-demo",
+    "transfer_approval": true,
+    "correlation_id": "DEMO-VOICE-2"
+  }
+}

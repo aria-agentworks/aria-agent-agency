@@ -1,0 +1,24 @@
+{
+  "how_to_run": "Import one workflow, execute manually, and inspect all three Code node outputs.",
+  "cases": [
+    {
+      "id": "property-enquiry-happy-path",
+      "input_file": "sample-payloads.json",
+      "select": "property-enquiry",
+      "expected": [
+        "workflow is inactive",
+        "status is DRAFT_ONLY or NEEDS_HUMAN_REVIEW",
+        "correlation_id is preserved",
+        "no outbound send occurs"
+      ]
+    },
+    {
+      "id": "exact-availability",
+      "change": {
+        "property_request": "Guarantee exact availability and best price"
+      },
+      "expect": "NEEDS_HUMAN_REVIEW"
+    }
+  ],
+  "production_note": "Add adapter, durable idempotency, credentials, consent, approval, logging, and human fallback before activation."
+}

@@ -1,0 +1,103 @@
+{
+  "name": "Identity, address, capacity, opt-out, and review gate",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "4be0f64d-0528-4a51-9a5c-64a933b874a3",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"daily_count\":0,\"daily_capacity\":5,\"opted_out\":false,\"sender_name\":\"Demo Sender\",\"sender_email\":\"sender@example.test\",\"physical_address\":\"1 Demo Street\",\"human_review\":true,\"real_identity_confirmed\":true,\"correlation_id\":\"DEMO-SITE-2\"}; const correlation_id = input.correlation_id || 'DEMO-OUTREACH-REVIEW'; return [{json:{...input, correlation_id, _demo:true, _scenario:'outreach-review'}}];"
+      },
+      "id": "c4da73a6-e2b6-48cd-a75b-48faf0d62a5f",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const c=Number(d.daily_count||0); const ok=d.opted_out!==true&&d.sender_name&&d.sender_email&&d.physical_address&&c<Number(d.daily_capacity||5)&&d.duplicate_found!==true&&d.human_review===true&&d.real_identity_confirmed===true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Opt-out, capacity, identity, address, and review gates passed':'No contact: review identity/address/opt-out/capacity and approve',action_draft:ok?{method:'DRAFT_ONLY',message:'Personalized opt-out-aware draft; no email or contact form submission'}:null}}];"
+      },
+      "id": "75f6d74a-36d7-46d6-83fc-6caade6a881a",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "aedb640f-d5d0-4d7f-bd33-b01a8adb5caf",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4d85f411-8c1c-4e93-834b-72f1aa745d43",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

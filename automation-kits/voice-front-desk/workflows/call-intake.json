@@ -1,0 +1,103 @@
+{
+  "name": "Provider summary, language, consent, and disclosure intake",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8463912a-a0d7-428c-826a-50cbefe31276",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"provider_event_id\":\"CALL-DEMO-1\",\"summary\":\"Caller asks for opening hours\",\"language\":\"en-IN\",\"consent_status\":\"granted\",\"disclosure_confirmed\":true,\"owner\":\"front-desk\",\"correlation_id\":\"DEMO-VOICE-1\"}; const correlation_id = input.correlation_id || 'DEMO-CALL-INTAKE'; return [{json:{...input, correlation_id, _demo:true, _scenario:'call-intake'}}];"
+      },
+      "id": "265f2884-151e-4318-92d5-07666739cd41",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const missing=['provider_event_id','summary','language','consent_status'].filter(k=>!String(d[k]||'').trim()); const disclosed=d.disclosure_confirmed===true; const ok=!missing.length&&disclosed&&d.consent_status==='granted'; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Provider summary and disclosure/consent confirmed':'Missing provider summary, consent, language, or disclosure',action_draft:ok?{summary:d.summary,language:d.language,disclosure:'Use client-approved disclosure',owner:d.owner}:null}}];"
+      },
+      "id": "28abe5f3-2c56-4cca-adee-ae736fd9071a",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "f6f0deb2-9d17-46bd-96be-4bba93709b89",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fcbe5e12-dc59-40c9-aa19-91e32e8d1332",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

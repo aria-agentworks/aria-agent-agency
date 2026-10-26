@@ -1,0 +1,10 @@
+{
+  "trigger": "Approved Meta lead-form, WhatsApp Business, or optional client voice-provider event; optional client-owned reviewed follow-up run.",
+  "data": "Consent/source, phone and supplied enquiry, stated location/budget/BHK/property type/intent, client-supplied listing records, broker roster and source-confirmed viewing slots.",
+  "action": "Normalize a lead, look up approved client inventory, and prepare a broker assignment or viewing request. Writes, booking confirmation, WhatsApp reply and outbound follow-up require staff approval and authorized APIs.",
+  "kpi": "Time from eligible source event to broker review; eligible lead-to-staff-confirmed viewing rate; duplicate/opt-out/exception counts. Do not treat fixture dashboard values as real metrics.",
+  "aiRules": "Starter Code nodes validate synthetic data and prepare drafts using explicit rules. Included prompts and JSON schemas guide a separately configured, approved AI classification/extraction step; starter rules are not presented as AI execution.",
+  "humanFallback": "Missing facts, uncertain answers, unsupported actions, and provider failures go to the named business owner’s review queue.",
+  "logging": "The starter returns a workflow name, correlation ID, status, and audit/action draft. Production adapters must persist event/version/owner/timestamps and communication outcomes in the approved source or log store.",
+  "safety": "Recheck current source status before writes/sends. Use a durable idempotency store keyed to event/record and action; demo flags are not production deduplication. Failed adapters must create an owned exception, not silently retry consequential actions."
+}

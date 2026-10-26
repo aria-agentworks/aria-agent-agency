@@ -1,0 +1,103 @@
+{
+  "name": "Analyzer score threshold and watermarked preview draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "50f720d9-8c73-4b3a-987e-5ec02308ca0c",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"authorized_public_url\":true,\"threshold\":45,\"analyzer_output\":{\"ok\":true,\"score\":42,\"data\":{\"business_name\":\"Demo Studio\",\"phone\":\"+15550001002\",\"emails\":[],\"services\":[\"demo service\"]}},\"correlation_id\":\"DEMO-SITE-1\"}; const correlation_id = input.correlation_id || 'DEMO-SITE-SCORE-PREVIEW'; return [{json:{...input, correlation_id, _demo:true, _scenario:'site-score-preview'}}];"
+      },
+      "id": "410200f5-e4c5-483f-b1d0-28ed799d94a1",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const a=d.analyzer_output||{}; const score=Number(a.score); const threshold=Number(d.threshold??45); const facts=a.data||{}; const hasIdentity=Boolean(facts.business_name&&(facts.phone||(Array.isArray(facts.emails)&&facts.emails.length))); const ok=a.ok===true&&hasIdentity&&Number.isFinite(score)&&score>=0&&score<=100&&Number.isFinite(threshold)&&score<=threshold&&d.authorized_public_url===true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Authorized analyzer output is at or below the weak-site threshold':'Require authorized source, valid essentials, and analyzer score <= threshold',action_draft:ok?{preview:'DRAFT_ONLY',watermark:'NOT THE LIVE SITE',source_facts:facts}:null}}];"
+      },
+      "id": "c80c0332-b763-4959-98bc-f1058420b703",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "98a8a324-1dff-41f6-9921-1176c38f8f71",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "639c9a6a-fc55-4a41-8556-af88d114f15f",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

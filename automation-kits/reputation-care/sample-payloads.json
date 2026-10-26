@@ -1,0 +1,10 @@
+{
+  "reputation-review": {
+    "review_id": "REV-DEMO-001",
+    "rating": 5,
+    "review_text": "Friendly team and clear communication.",
+    "response_already_posted": false,
+    "consent_status": "granted",
+    "correlation_id": "DEMO-REV-001"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "name": "Exact two-day opt-in scheme reminder at 11:00 Asia/Kolkata",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f5667569-cd54-4c90-b90c-fc5eface5166",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"reference_date\":\"2030-01-15\",\"next_due\":\"2030-01-17\",\"opted_in\":true,\"reminder_hour\":\"11:00\",\"timezone\":\"Asia/Kolkata\",\"duplicate_found\":false,\"correlation_id\":\"DEMO-GOLD-2\"}; const correlation_id = input.correlation_id || 'DEMO-SCHEME-REMINDER'; return [{json:{...input, correlation_id, _demo:true, _scenario:'scheme-reminder'}}];"
+      },
+      "id": "ed73adba-9f8d-48aa-948e-a3cfad955075",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const dateOnly=x=>typeof x==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(x); const valid=dateOnly(d.next_due)&&dateOnly(d.reference_date); const due=valid?Date.parse(d.next_due+'T00:00:00Z'):NaN, ref=valid?Date.parse(d.reference_date+'T00:00:00Z'):NaN; const days=(due-ref)/86400000; const opted=d.opted_in===true||String(d.opted_in).toLowerCase()==='yes'; const ok=valid&&Number.isFinite(days)&&opted&&days===2&&d.reminder_hour==='11:00'&&d.timezone==='Asia/Kolkata'&&d.duplicate_found!==true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Opt-in, exact two-calendar-day window, timezone, and duplicate checks passed':'Reminder requires opted_in yes, exact date-only 2 days, 11:00 Asia/Kolkata, no duplicate',action_draft:ok?{reminder:'DRAFT_ONLY',due:d.next_due}:null}}];"
+      },
+      "id": "67cfbd30-9fc4-4a8c-b481-e15c7deb3441",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "299c8c93-79a6-4655-b049-ee9ab836cfaf",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b2c8ba38-76ce-42ba-b757-a963464bce34",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

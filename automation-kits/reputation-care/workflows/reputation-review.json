@@ -1,0 +1,103 @@
+{
+  "name": "Reputation Care | Draft response and service recovery",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "241e95b6-a914-4735-9b36-d1be2269c1b1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"review_id\":\"REV-DEMO-001\",\"rating\":5,\"review_text\":\"Friendly team and clear communication.\",\"response_already_posted\":false,\"consent_status\":\"granted\",\"correlation_id\":\"DEMO-REV-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-REPUTATION-REVIEW-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"reputation-review\" } }];"
+      },
+      "id": "1c97126e-d9d8-42c9-aee9-57bad5c5702a",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [\"review_id\", \"rating\", \"review_text\"].filter((key) => d[key] === undefined || d[key] === null || String(d[key]).trim() === \"\");\nconst sensitive = /injury|discrimination|fraud|legal|threat|medical/i.test(String(d.review_text || \"\"));\nconst duplicate = d.response_already_posted === true;\nconst review = missing.length > 0 || sensitive || duplicate || d.consent_status !== \"granted\";\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, duplicate, reason: missing.length ? \"Required review data is missing\" : sensitive ? \"Sensitive review needs a human\" : duplicate ? \"Response already recorded; stop\" : d.consent_status !== \"granted\" ? \"Approval is not confirmed\" : \"Review response can be drafted\"}}}];"
+      },
+      "id": "9f21a657-2663-4e12-8586-c8d41a41c164",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"reputation-review\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nconst low = Number(d.rating) <= 3;\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: !ready || low, reason: low ? \"Low rating requires human service recovery\" : v.reason, action_draft: {public_reply: ready && !low ? `Draft only: Thank you for sharing your experience. Our team appreciates the feedback.` : null, private_followup: low ? \"Draft an internal service-recovery task; do not auto-post.\" : null}, audit}}];"
+      },
+      "id": "6b11e6e8-21dc-4cd6-bbf4-cea321bb8e15",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "240b5cb5-0af9-4de6-94fd-a7ffe5759d8c",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

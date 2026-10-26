@@ -1,0 +1,27 @@
+{
+  "input": {
+    "type": "object",
+    "required": [
+      "correlation_id"
+    ]
+  },
+  "output": {
+    "status": [
+      "DRAFT_ONLY",
+      "NEEDS_HUMAN_REVIEW"
+    ],
+    "review_required": "boolean",
+    "correlation_id": "string"
+  },
+  "kit": "leadgen",
+  "workflow_contracts": {
+    "site-score-preview": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "outreach-review": {
+      "draft_only": true,
+      "human_approval_required": true
+    }
+  }
+}

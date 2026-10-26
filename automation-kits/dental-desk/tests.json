@@ -1,0 +1,106 @@
+{
+  "how_to_run": "Import one workflow, execute manually, and inspect all three Code node outputs.",
+  "cases": [
+    {
+      "id": "dental-lead-intake-happy-path",
+      "input_file": "sample-payloads.json",
+      "select": "dental-lead-intake",
+      "expected": [
+        "workflow is inactive",
+        "status is DRAFT_ONLY or NEEDS_HUMAN_REVIEW",
+        "correlation_id is preserved",
+        "no outbound send occurs"
+      ]
+    },
+    {
+      "id": "dental-no-show-happy-path",
+      "input_file": "sample-payloads.json",
+      "select": "dental-no-show",
+      "expected": [
+        "workflow is inactive",
+        "status is DRAFT_ONLY or NEEDS_HUMAN_REVIEW",
+        "correlation_id is preserved",
+        "no outbound send occurs"
+      ]
+    },
+    {
+      "id": "dental-no-show-status-changed",
+      "select": "dental-no-show",
+      "change": {
+        "current_status": "booked"
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and stop before draft send"
+    },
+    {
+      "id": "dental-no-show-duplicate",
+      "select": "dental-no-show",
+      "change": {
+        "already_sent": true
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and stop before draft send"
+    },
+    {
+      "id": "dental-discharge-followup-happy-path",
+      "input_file": "sample-payloads.json",
+      "select": "dental-discharge-followup",
+      "expected": [
+        "workflow is inactive",
+        "status is DRAFT_ONLY or NEEDS_HUMAN_REVIEW",
+        "correlation_id is preserved",
+        "no outbound send occurs"
+      ]
+    },
+    {
+      "id": "dental-discharge-followup-unapproved-date",
+      "select": "dental-discharge-followup",
+      "change": {
+        "approved_followup": false
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and no task date inferred"
+    },
+    {
+      "id": "dental-diagnostic-escalation-happy-path",
+      "input_file": "sample-payloads.json",
+      "select": "dental-diagnostic-escalation",
+      "expected": [
+        "workflow is inactive",
+        "status is DRAFT_ONLY or NEEDS_HUMAN_REVIEW",
+        "correlation_id is preserved",
+        "no outbound send occurs"
+      ]
+    },
+    {
+      "id": "dental-diagnostic-escalation-result-text",
+      "select": "dental-diagnostic-escalation",
+      "change": {
+        "report_text": "abnormal result"
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and staff escalation only; no result interpretation"
+    },
+    {
+      "id": "missing-slot",
+      "change": {
+        "available_slot": {
+          "confirmed": false
+        }
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and no invented appointment"
+    },
+    {
+      "id": "clinical-language",
+      "change": {
+        "enquiry_text": "I have severe pain; diagnose me"
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and no clinical advice"
+    },
+    {
+      "id": "no-show-duplicate",
+      "change": {
+        "current_status": "no_show",
+        "already_sent": true
+      },
+      "expect": "stop before draft send"
+    }
+  ],
+  "production_note": "Add adapter, durable idempotency, credentials, consent, approval, logging, and human fallback before activation."
+}

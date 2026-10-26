@@ -1,0 +1,35 @@
+{
+  "input": {
+    "type": "object",
+    "required": [
+      "correlation_id"
+    ]
+  },
+  "output": {
+    "status": [
+      "DRAFT_ONLY",
+      "NEEDS_HUMAN_REVIEW"
+    ],
+    "review_required": "boolean",
+    "correlation_id": "string"
+  },
+  "kit": "gold",
+  "workflow_contracts": {
+    "daily-rates": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "scheme-reminder": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "showroom-visit": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "estimate-slip": {
+      "draft_only": true,
+      "human_approval_required": true
+    }
+  }
+}

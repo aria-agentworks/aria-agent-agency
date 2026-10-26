@@ -1,0 +1,103 @@
+{
+  "name": "Daily Operations | Supplied metrics summary draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9b2a2b9d-7d9a-4726-b361-7ae7194040d3",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"reporting_date\":\"2030-07-01\",\"metrics\":{\"new_leads\":12,\"open_tasks\":4,\"resolved_tickets\":9},\"exceptions\":[\"One adapter response pending\"],\"correlation_id\":\"DEMO-OPS-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-DAILY-OPERATIONS-SUMMARY-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"daily-operations-summary\" } }];"
+      },
+      "id": "7df1ddf0-f4c9-473b-adc4-9966805417b6",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst metrics = d.metrics;\nconst missing = !metrics || typeof metrics !== \"object\";\nconst review = missing || d.reporting_date === undefined || d.reporting_date === null || String(d.reporting_date).trim() === \"\";\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing: missing ? [\"metrics\"] : [], reason: missing ? \"Metrics object is missing\" : !d.reporting_date ? \"Reporting date is missing\" : \"Supplied operational metrics validated\"}}}];"
+      },
+      "id": "a00badc8-8666-4409-9bc7-2dc23d7e8ca3",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"daily-operations-summary\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nconst metricKeys = ready ? Object.keys(d.metrics || {}) : [];\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: !ready, reason: v.reason, action_draft: {headline: ready ? `Operational summary for ${d.reporting_date}` : \"No summary drafted\", supplied_metric_keys: metricKeys, exceptions: ready ? (d.exceptions || []) : [], next_step: ready ? \"Manager review before distribution\" : \"Collect complete metrics\"}, audit}}];"
+      },
+      "id": "bfe7d205-906a-4f1d-9b90-b1b0e994732c",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ae7802e4-4829-41ba-a2ef-9726c80fc244",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

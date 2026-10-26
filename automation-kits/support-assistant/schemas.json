@@ -1,0 +1,54 @@
+{
+  "input": {
+    "type": "object",
+    "required": [
+      "correlation_id"
+    ],
+    "properties": {
+      "correlation_id": {
+        "type": "string"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": [
+      "status",
+      "review_required",
+      "reason",
+      "correlation_id"
+    ],
+    "properties": {
+      "status": {
+        "enum": [
+          "READY",
+          "NEEDS_HUMAN_REVIEW",
+          "DRAFT_ONLY"
+        ]
+      },
+      "review_required": {
+        "type": "boolean"
+      },
+      "reason": {
+        "type": "string"
+      },
+      "correlation_id": {
+        "type": "string"
+      },
+      "action_draft": {
+        "type": "object"
+      }
+    }
+  },
+  "kit": "support-assistant",
+  "workflow_outputs": {
+    "support-intake": {
+      "status": "DRAFT_ONLY|NEEDS_HUMAN_REVIEW",
+      "review_required": true,
+      "reply": "string",
+      "ticket_update": "DRAFT|HUMAN_REVIEW",
+      "correlation_id": "string"
+    }
+  },
+  "adapter_contract": "Return source-confirmed fields plus correlation_id and explicit error state; never infer missing values."
+}

@@ -1,0 +1,103 @@
+{
+  "name": "Staff-approved visit request draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "bc7713fe-27fa-4e9b-bf4c-ca90c8303623",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"customer_name\":\"Demo Customer\",\"requested_slot\":\"2030-01-18T11:30:00+05:30\",\"owner\":\"showroom-staff\",\"staff_approval\":true,\"correlation_id\":\"DEMO-GOLD-3\"}; const correlation_id = input.correlation_id || 'DEMO-SHOWROOM-VISIT'; return [{json:{...input, correlation_id, _demo:true, _scenario:'showroom-visit'}}];"
+      },
+      "id": "7345e6fc-feea-4879-a453-32c6f53b75bb",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const ok=d.staff_approval===true&&d.customer_name&&d.requested_slot&&d.owner; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Staff-approved showroom visit draft':'Visit requires named owner, slot, and staff approval',action_draft:ok?{visit:{customer:d.customer_name,slot:d.requested_slot,owner:d.owner},send:false}:null}}];"
+      },
+      "id": "bc0af1b6-a6ca-473b-87b8-2c854aae8c9c",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "cf570283-3584-4ba1-b53e-275859b46ae5",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "76b86403-9fb9-4be9-8b3a-ff1af038452f",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

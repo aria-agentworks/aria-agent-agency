@@ -1,0 +1,102 @@
+{
+  "name": "Universal Replier | Booking module draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7f1c2a10-0001-4a11-9e01-1a2b3c4d5e01",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved scheduling adapter at deployment time.\nconst profile = {\n  business: { name: 'Sunrise Dental Clinic (DEMO)', hours: 'Mon-Sat, 9am-7pm IST', handover_contact: '+919000000000' },\n  modules: { booking: true, lead_capture: true, order_status: false, payment_link: false }\n};\nconst request = {\n  name: 'Priya (demo)',\n  contact: '+919000000002',\n  text: 'Kal ka slot milega kya?',\n  requested_window: 'tomorrow_morning',\n  consent_status: 'granted',\n  channel: 'whatsapp_demo',\n  correlation_id: 'DEMO-UR-BOOKING-001'\n};\n// Slots MUST come from the client-owned scheduling source; the demo list is fictional and never sent anywhere.\nconst source_availability = [\n  { slot_id: 'SLOT-001', date: '2026-01-16', start: '10:00', service: 'Consultation', provider: 'Dr. Demo' },\n  { slot_id: 'SLOT-002', date: '2026-01-16', start: '11:30', service: 'Consultation', provider: 'Dr. Demo' },\n  { slot_id: 'SLOT-003', date: '2026-01-16', start: '14:00', service: 'Cleaning', provider: 'Dr. Demo' }\n];\nconst correlation_id = request.correlation_id || 'DEMO-UNIVERSAL-REPLIER-BOOKING-SAMPLE';\nreturn [{ json: { ...request, profile, source_availability, correlation_id, _demo: true, _scenario: 'replier-booking' } }];"
+      },
+      "id": "7f1c2a10-0002-4a11-9e02-1a2b3c4d5e02",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst modules = (d.profile && d.profile.modules) || {};\nconst slots = Array.isArray(d.source_availability) ? d.source_availability : [];\nconst missing = ['name', 'contact', 'text'].filter((key) => !String(d[key] || '').trim());\nconst bookingEnabled = modules.booking === true;\nconst slotsConfirmed = slots.length > 0 && slots.every((s) => s.slot_id && s.date && s.start);\nconst review = missing.length > 0 || !bookingEnabled || !slotsConfirmed || d.consent_status !== 'granted';\nreturn [{ json: { ...d, _validation: { status: review ? 'NEEDS_HUMAN_REVIEW' : 'READY', review_required: review, missing, reason: missing.length ? 'Required booking data is missing' : !bookingEnabled ? 'Booking module is switched off in the profile' : !slotsConfirmed ? 'Availability list empty or unconfirmed by the scheduling source' : d.consent_status !== 'granted' ? 'Consent is not confirmed' : 'Booking request validated' } } }];"
+      },
+      "id": "7f1c2a10-0003-4a11-9e03-1a2b3c4d5e03",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || { status: 'NEEDS_HUMAN_REVIEW', review_required: true, reason: 'Validation output missing' };\nconst slots = Array.isArray(d.source_availability) ? d.source_availability : [];\nconst offered = slots.slice(0, 3).map((s) => s.slot_id + ' ' + s.date + ' ' + s.start + ' (' + (s.service || 'service') + ')');\nconst booking_draft = {\n  module: 'booking',\n  offered_slots: v.status === 'READY' ? offered : [],\n  confirmation_draft: v.status === 'READY'\n    ? 'Draft only: Hello ' + (d.name || '') + ', these slots are open tomorrow: ' + offered.join(', ') + '. Reply with a slot and the team will confirm.'\n    : '',\n  calendar_write: 'not_performed_in_demo',\n  reminder_after_booking: 'Send an opted-in reminder from the approved template only.'\n};\nconst correlation_id = d.correlation_id || 'DEMO-UNKNOWN';\nconst audit = { workflow: 'replier-booking', action: 'draft_only', record_id: d.contact || 'sample', correlation_id: correlation_id };\nreturn [{ json: { ...d, status: v.status === 'READY' ? 'DRAFT_ONLY' : 'NEEDS_HUMAN_REVIEW', review_required: v.review_required, reason: v.reason, needs_human: v.review_required, booking_draft: booking_draft, action_draft: { reply: booking_draft.confirmation_draft || 'Route the booking request to a human owner; never invent slots.', owner: v.review_required ? 'human-review' : 'replier' }, audit } }];"
+      },
+      "id": "7f1c2a10-0004-4a11-9e04-1a2b3c4d5e04",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

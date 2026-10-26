@@ -1,0 +1,102 @@
+{
+  "name": "Universal Replier | Message intake and approved-facts reply",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7f1c2a10-0001-4a11-9e01-1a2b3c4d5e01",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved channel adapter at deployment time.\n// Business profile: one file of approved facts per client (services, prices, hours, policies, handover).\nconst profile = {\n  business: {\n    name: 'Sunrise Dental Clinic (DEMO)',\n    type: 'clinic',\n    languages: ['English', 'Hinglish'],\n    hours: 'Mon-Sat, 9am-7pm IST',\n    location: 'MG Road, Demo City; approved map link on file',\n    handover_contact: '+919000000000',\n    emergency_note: 'For emergencies call +919000000001'\n  },\n  services: [\n    { name: 'Consultation', price: 'Rs 500', duration_min: 30, bookable: true },\n    { name: 'Cleaning', price: 'Rs 1200', duration_min: 45, bookable: true },\n    { name: 'Braces consult', price: 'On request', duration_min: 60, bookable: false }\n  ],\n  faqs: [\n    { q: 'Do you offer home visits?', a: 'Home visits are not offered; clinic visits only.' }\n  ],\n  policies: { cancellation: 'Cancel 4 hours before the slot.', payment: 'Pay at the clinic.', refunds: 'Handled by the clinic owner only.' },\n  modules: { booking: true, lead_capture: true, order_status: false, payment_link: false },\n  never: ['give medical, legal or financial advice', 'promise discounts', 'quote unlisted prices'],\n  escalate_on: ['emergency', 'complaint', 'refund', 'asks for a human']\n};\nconst message = {\n  name: 'Priya (demo)',\n  contact: '+919000000002',\n  text: 'Kal ka slot milega kya?',\n  consent_status: 'granted',\n  channel: 'whatsapp_demo',\n  correlation_id: 'DEMO-UR-INTAKE-001'\n};\nconst correlation_id = message.correlation_id || 'DEMO-UNIVERSAL-REPLIER-INTAKE-SAMPLE';\nreturn [{ json: { ...message, profile, correlation_id, _demo: true, _scenario: 'replier-intake' } }];"
+      },
+      "id": "7f1c2a10-0002-4a11-9e02-1a2b3c4d5e02",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst profile = d.profile || null;\nconst text = String(d.text || '');\nconst missing = ['name', 'contact', 'text'].filter((key) => !String(d[key] || '').trim());\nconst escalationWords = /emergency|urgent|accident|complaint|refund|worst|terrible|unacceptable|speak to|talk to|manager/i;\nconst adviceWords = /diagnos|prescri|dosage|medicine for|legal advice|tax advice|invest/i;\nconst sensitive = escalationWords.test(text) || adviceWords.test(text);\nconst review = missing.length > 0 || sensitive || d.consent_status !== 'granted' || !profile;\nreturn [{ json: { ...d, _validation: { status: review ? 'NEEDS_HUMAN_REVIEW' : 'READY', review_required: review, missing, reason: missing.length ? 'Required message data is missing' : sensitive ? 'Message matches an escalation or advice rule' : d.consent_status !== 'granted' ? 'Consent is not confirmed' : !profile ? 'Business profile not loaded' : 'Message validated against the business profile' } } }];"
+      },
+      "id": "7f1c2a10-0003-4a11-9e03-1a2b3c4d5e03",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || { status: 'NEEDS_HUMAN_REVIEW', review_required: true, reason: 'Validation output missing' };\nconst profile = d.profile || { business: {}, services: [], faqs: [], policies: {}, never: [] };\nconst text = String(d.text || '');\nconst intents = [\n  ['emergency', /emergency|urgent|accident|severe|bleeding/i],\n  ['human_request', /speak to|talk to|human|person|manager|someone/i],\n  ['complaint', /complaint|worst|terrible|unacceptable|refund/i],\n  ['booking', /slot|appointment|book|available|tomorrow|kal|visit/i],\n  ['pricing', /price|fees?|cost|rate|kitna|charges/i],\n  ['hours_location', /open|hours|timings?|where|address|location/i],\n  ['order_status', /order|delivery|dispatch/i],\n  ['quote_request', /quote|estimate|quotation/i],\n  ['service_info', /do you (do|offer)|services?|treatment|package/i],\n  ['greeting', /^(hi|hello|hey|namaste|good (morning|afternoon|evening))/i]\n];\nlet intent = 'other';\nfor (const pair of intents) { if (pair[1].test(text)) { intent = pair[0]; break; } }\nconst escalationIntents = ['emergency', 'complaint', 'human_request', 'other'];\nconst requiresHuman = v.status === 'NEEDS_HUMAN_REVIEW' || escalationIntents.includes(intent);\nlet reply;\nif (requiresHuman) {\n  reply = intent === 'emergency'\n    ? 'Draft only: Share the profile emergency note (' + (profile.business.emergency_note || 'on file') + ') and alert the handover contact.'\n    : 'Draft only: Acknowledge briefly and route to the team. Do not invent facts or promises.';\n} else if (intent === 'booking') {\n  reply = 'Draft only: Offer slots returned by the approved scheduling source only; confirm after booking.';\n} else if (intent === 'pricing') {\n  const listed = (profile.services || []).filter((s) => s.price && s.price !== 'On request').map((s) => s.name + ': ' + s.price).join('; ');\n  reply = 'Draft only: Share listed prices only (' + (listed || 'none listed') + '). Say the team will confirm anything unlisted.';\n} else if (intent === 'hours_location') {\n  reply = 'Draft only: Hours on file: ' + (profile.business.hours || 'unlisted') + '. Location on file: ' + (profile.business.location || 'unlisted') + '.';\n} else if (intent === 'service_info') {\n  reply = 'Draft only: Answer from the approved services and FAQ list only.';\n} else if (intent === 'quote_request') {\n  reply = 'Draft only: Collect requirement details into the lead sheet and alert the team.';\n} else {\n  reply = 'Draft only: Greet and show what the replier can help with, using profile facts only.';\n}\nconst correlation_id = d.correlation_id || 'DEMO-UNKNOWN';\nconst audit = { workflow: 'replier-intake', action: 'draft_only', record_id: d.contact || 'sample', correlation_id: correlation_id };\nreturn [{ json: { ...d, status: requiresHuman ? 'NEEDS_HUMAN_REVIEW' : 'DRAFT_ONLY', review_required: requiresHuman, intent: intent, reply: reply, needs_human: requiresHuman, reason: v.reason, action_draft: { reply: reply, owner: requiresHuman ? 'human-review' : 'replier' }, audit } }];"
+      },
+      "id": "7f1c2a10-0004-4a11-9e04-1a2b3c4d5e04",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

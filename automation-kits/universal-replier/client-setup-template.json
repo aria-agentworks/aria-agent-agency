@@ -1,0 +1,62 @@
+{
+  "automation_id": "universal-replier",
+  "enabled": false,
+  "business": {
+    "name": "",
+    "website": "",
+    "location": "",
+    "country": "",
+    "timezone": "",
+    "industry": "cross-industry",
+    "languages": [],
+    "human_owner": "",
+    "human_transfer_destination": ""
+  },
+  "workflow": {
+    "daily_capacity": 5,
+    "quality_score_threshold": 45,
+    "allowed_actions": [
+      "draft_only"
+    ],
+    "require_human_approval": true,
+    "prevent_duplicate_events": true
+  },
+  "integrations": [
+    {
+      "name": "n8n workspace",
+      "required": true,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "WhatsApp Business Platform / Cloud API",
+      "required": true,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "Scheduling / calendar source (optional)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "AI provider (optional)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "Lead sheet / CRM (optional)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    }
+  ],
+  "notes": "Keep workflow inactive until API permissions, consent, privacy/security review, human ownership, error handling, and test approval are complete. Never store API keys in this configuration."
+}

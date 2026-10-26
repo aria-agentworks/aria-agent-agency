@@ -1,0 +1,102 @@
+{
+  "name": "Universal Replier | Opt-in reminder draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7f1c2a10-0001-4a11-9e01-1a2b3c4d5e01",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved consent store at deployment time.\nconst profile = {\n  business: { name: 'Sunrise Dental Clinic (DEMO)', hours: 'Mon-Sat, 9am-7pm IST' },\n  modules: { booking: true, lead_capture: true, order_status: false, payment_link: false }\n};\nconst followup = {\n  name: 'Anita (demo)',\n  contact: '+919000000004',\n  reminder_type: 'appointment_reminder',\n  consent_status: 'granted',\n  opt_in_expires_at: '2026-12-31',\n  last_sent_at: '2026-01-14T09:00:00+05:30',\n  demo_now_iso: '2026-01-15T09:00:00+05:30',\n  appointment: { slot_id: 'SLOT-002', date: '2026-01-17', start: '11:30', service: 'Consultation' },\n  channel: 'whatsapp_demo',\n  correlation_id: 'DEMO-UR-FOLLOWUP-001'\n};\n// Templates MUST come from the client-approved template list; the demo map is fictional and never sent anywhere.\nconst approved_templates = {\n  appointment_reminder: 'Reminder: {name}, you have {service} on {date} at {start}. Reply CANCEL to change it.',\n  review_request: 'Thank you for visiting {business}! If you have a moment, a review helps us a lot: {review_link_on_file}.',\n  recall: 'Hi {name}, it has been a while since your last visit. Would you like to book a check-up?'\n};\nconst correlation_id = followup.correlation_id || 'DEMO-UNIVERSAL-REPLIER-FOLLOWUP-SAMPLE';\nreturn [{ json: { ...followup, profile, approved_templates, correlation_id, _demo: true, _scenario: 'replier-followup' } }];"
+      },
+      "id": "7f1c2a10-0002-4a11-9e02-1a2b3c4d5e02",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst templates = d.approved_templates || {};\nconst missing = ['contact', 'reminder_type'].filter((key) => !String(d[key] || '').trim());\nconst consented = d.consent_status === 'granted';\nconst optInValid = Boolean(d.opt_in_expires_at) && String(d.opt_in_expires_at) >= String(d.demo_now_iso || '').slice(0, 10);\nconst templateApproved = Boolean(templates[d.reminder_type]);\nconst nowMs = new Date(String(d.demo_now_iso || Date.now())).getTime();\nconst lastMs = d.last_sent_at ? new Date(String(d.last_sent_at)).getTime() : 0;\nconst frequencyOk = !lastMs || nowMs - lastMs >= 20 * 60 * 60 * 1000;\nconst review = missing.length > 0 || !consented || !optInValid || !templateApproved || !frequencyOk;\nreturn [{ json: { ...d, _validation: { status: review ? 'NEEDS_HUMAN_REVIEW' : 'READY', review_required: review, missing, reason: missing.length ? 'Required follow-up data is missing' : !consented ? 'Contact has not opted in' : !optInValid ? 'Opt-in has expired or is missing' : !templateApproved ? 'Reminder type is not in the approved template list' : !frequencyOk ? 'Frequency cap: last message was sent less than 20 hours ago' : 'Follow-up request validated' } } }];"
+      },
+      "id": "7f1c2a10-0003-4a11-9e03-1a2b3c4d5e03",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || { status: 'NEEDS_HUMAN_REVIEW', review_required: true, reason: 'Validation output missing' };\nconst templates = d.approved_templates || {};\nlet message = '';\nif (v.status === 'READY') {\n  message = String(templates[d.reminder_type] || '')\n    .replace('{name}', d.name || '')\n    .replace('{service}', (d.appointment && d.appointment.service) || '')\n    .replace('{date}', (d.appointment && d.appointment.date) || '')\n    .replace('{start}', (d.appointment && d.appointment.start) || '')\n    .replace('{business}', (d.profile && d.profile.business && d.profile.business.name) || '')\n    .replace('{review_link_on_file}', 'approved link on file');\n}\nconst followup_draft = {\n  module: 'followup',\n  template_used: v.status === 'READY' ? d.reminder_type : 'none',\n  message_draft: v.status === 'READY' ? 'Draft only: ' + message : '',\n  send: 'not_performed_in_demo',\n  opt_in_note: 'Send only to contacts who opted in, using approved templates only.'\n};\nconst correlation_id = d.correlation_id || 'DEMO-UNKNOWN';\nconst audit = { workflow: 'replier-followup', action: 'draft_only', record_id: d.contact || 'sample', correlation_id: correlation_id };\nreturn [{ json: { ...d, status: v.status === 'READY' ? 'DRAFT_ONLY' : 'NEEDS_HUMAN_REVIEW', review_required: v.review_required, reason: v.reason, needs_human: v.review_required, followup_draft: followup_draft, action_draft: { reply: followup_draft.message_draft || 'Route to a human owner; never message without opt-in and an approved template.', owner: v.review_required ? 'human-review' : 'replier' }, audit } }];"
+      },
+      "id": "7f1c2a10-0004-4a11-9e04-1a2b3c4d5e04",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

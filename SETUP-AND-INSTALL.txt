@@ -1,0 +1,79 @@
+ARIA PLATFORM - SOURCE PACKAGE
+==============================
+
+Thank you for downloading the complete Aria platform source code.
+This package contains everything: the platform, all 14 automation kits,
+the Growth Engine, and all scripts and guides.
+
+WHAT IS IN THIS ZIP
+-------------------
+- Full source code (client/, server/, shared/, drizzle/, scripts/)
+- automation-kits/  -> the 14 deliverable n8n automation kits
+- README.md         -> setup, payments, environment reference, deployment
+- LAUNCH-GUIDE.md   -> 90-day sales and marketing plan
+- Aria-Installation-and-Client-Onboarding-Guide.md -> per-kit install guide
+- Dockerfile        -> production container build
+
+EXCLUDED BY DESIGN (recreated automatically)
+--------------------------------------------
+- node_modules/        -> run: pnpm install
+- dist/                -> run: pnpm build
+- data/aria.sqlite3    -> auto-created on first boot (schema included)
+- data/auth-secret     -> auto-generated on first boot
+
+REQUIREMENTS
+------------
+- Node.js 22 (Node 20 works)
+- pnpm 10.18  (corepack enable && corepack prepare pnpm@10.18.0 --activate)
+- No external database: SQLite is embedded (file data/aria.sqlite3)
+
+QUICK START (development)
+-------------------------
+  pnpm install
+  pnpm dev                 # http://localhost:3000
+  # the FIRST account you register at /login becomes the admin
+
+PRODUCTION
+----------
+  pnpm build
+  NODE_ENV=production PORT=3000 node dist/index.js
+  # or: docker build -t aria . && docker run -p 3000:3000 -v aria_data:/app/data aria
+  # put HTTPS in front (Caddy/nginx); cookie flags adapt automatically
+
+GO LIVE WITH PAYMENTS (Dodo Payments - merchant of record)
+----------------------------------------------------------
+1. Create .env with:
+     DODO_PAYMENTS_API_KEY=your_key
+     DODO_PAYMENTS_MODE=test_mode        # live_mode when ready
+     DODO_WEBHOOK_KEY=whsec_...          # from Dodo Developer -> Webhooks
+     PUBLIC_SITE_ORIGIN=https://your-domain
+2. In the Dodo dashboard, point a webhook at
+     https://your-domain/api/dodo/webhook
+   and subscribe to: payment.succeeded, payment.failed,
+   subscription.active, subscription.past_due, subscription.cancelled,
+   subscription.expired
+3. Register your admin account, open /admin, click
+   "Sync catalog to Dodo Payments" (creates every kit, plan and
+   installation product automatically).
+4. Test a full checkout with Dodo test cards, then switch to live_mode.
+5. Local verification without keys:
+     node scripts/simulate-dodo-webhook.mjs     # 7/7 scenarios
+
+USEFUL COMMANDS
+---------------
+  pnpm check     # type check (tsc --noEmit)
+  pnpm test      # 24 automated tests
+  pnpm exec tsx scripts/seed-growth-leads.ts   # seed 34 researched leads
+  python3 scripts/validate_kits.py             # verify 14 kits / 33 workflows
+
+WHERE THINGS LIVE
+-----------------
+  /growth            -> your internal sales console (leads + 4 agents)
+  /get-started       -> client onboarding wizard (website scan or questions)
+  /portal            -> client portal (install status, embed snippet)
+  /admin             -> revenue, subscribers, Dodo catalog sync
+  shared/growth.ts   -> niche playbooks (add a new niche here)
+  shared/solutions.ts-> the 10 business categories and their outcomes
+
+Full technical documentation: see the companion PDF
+"Aria-Platform-Complete-Technical-Build.pdf".

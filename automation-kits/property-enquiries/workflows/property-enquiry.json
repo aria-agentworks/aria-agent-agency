@@ -1,0 +1,103 @@
+{
+  "name": "Property Enquiries | Validate and draft human handoff",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "bc07404d-e822-4381-9b08-69cde4622b5d",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"enquiry_id\":\"PROP-DEMO-001\",\"name\":\"Morgan Diaz\",\"contact\":\"+15550001004\",\"property_request\":\"I am looking for a two-bedroom rental near transit.\",\"consent_status\":\"granted\",\"correlation_id\":\"DEMO-PROP-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-PROPERTY-ENQUIRY-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"property-enquiry\" } }];"
+      },
+      "id": "eead9b88-5fa0-4ee0-8bd1-26f1f8aa4682",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [\"enquiry_id\", \"name\", \"contact\", \"property_request\"].filter((key) => !String(d[key] || \"\").trim());\nconst unsupported = /guarantee|exact availability|best price|legal|deposit/i.test(String(d.property_request || \"\"));\nconst review = missing.length > 0 || unsupported || d.consent_status !== \"granted\";\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, unsupported, reason: missing.length ? \"Required enquiry data is missing\" : unsupported ? \"Availability, pricing, or legal claim needs an agent\" : d.consent_status !== \"granted\" ? \"Consent is not confirmed\" : \"Property enquiry validated without making claims\"}}}];"
+      },
+      "id": "a119baac-bcab-421f-b4d7-1249fe06b127",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"property-enquiry\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: !ready, reason: v.reason, action_draft: {reply: ready ? `Draft only: Thanks ${d.name}; a property specialist will review your enquiry and reply with source-confirmed details.` : \"Route to a property specialist; do not state availability, pricing, or legal terms.\", adapter_request: ready ? \"Lookup via approved property system before any claim\" : \"Human review\"}, audit}}];"
+      },
+      "id": "7438b231-eb01-4a81-ad4e-aadc8ce1cdbf",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1d963859-18f1-48a2-8662-163f4f588fd6",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

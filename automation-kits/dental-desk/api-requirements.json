@@ -1,0 +1,33 @@
+{
+  "product": "dental-desk",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Practice system / scheduler",
+      "purpose": "Checks current appointment state and source-confirmed availability.",
+      "required": true,
+      "clientProvides": [
+        "Practice system/vendor and approved scheduling API documentation",
+        "Minimum allowed administrative fields and staff handoff owner"
+      ],
+      "secretDestination": "n8n Credentials vault; never send patient/API secrets in the public form.",
+      "steps": [
+        "Import the kit and run synthetic intake/no-show cases.",
+        "Connect the approved API or use the documented staff handoff."
+      ]
+    },
+    {
+      "label": "Messaging provider",
+      "purpose": "Can deliver an approved reminder only after consent and duplicate checks.",
+      "required": false,
+      "clientProvides": [
+        "Provider, approved message templates, sender/number, consent and opt-out rules"
+      ],
+      "secretDestination": "Provider credential stored in n8n.",
+      "steps": [
+        "Create a provider account/credential.",
+        "Keep send nodes disabled until practice approval."
+      ]
+    }
+  ]
+}

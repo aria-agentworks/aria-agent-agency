@@ -1,0 +1,41 @@
+// Base44-native workflow definitions (if importing back into a Base44 Superagent).
+// Pipeline: weekdays 04:00 Asia/Calcutta. Digest: Fridays 17:00 Asia/Calcutta.
+// The `message` of each invoke_superagent_step is the content of pipeline-prompt.md
+// (pipeline) and the digest instructions below. Create via create_or_update_workflow.
+
+{
+  "Lead Gen Daily Pipeline": {
+    "trigger": {
+      "config": { "trigger_type": "scheduled", "cron_expression": "0 4 * * 1-5", "timezone": "Asia/Calcutta" }
+    },
+    "definition": {
+      "document": { "dsl": "1.0.0", "name": "leadgen_daily_pipeline", "version": "1.0", "namespace": "base44" },
+      "do": [
+        {
+          "run_pipeline": {
+            "call": "invoke_superagent_step",
+            "with": { "message": "<paste the full contents of pipeline-prompt.md here>" },
+            "then": "end"
+          }
+        }
+      ]
+    }
+  },
+  "Lead Gen Weekly Digest": {
+    "trigger": {
+      "config": { "trigger_type": "scheduled", "cron_expression": "0 17 * * 5", "timezone": "Asia/Calcutta" }
+    },
+    "definition": {
+      "document": { "dsl": "1.0.0", "name": "leadgen_weekly_digest", "version": "1.0", "namespace": "base44" },
+      "do": [
+        {
+          "send_digest": {
+            "call": "invoke_superagent_step",
+            "with": { "message": "WEEKLY LEAD-GEN DIGEST — it is Friday 5 PM. Read OutreachLog records with sent_at in the last 7 days and Prospect records created or updated in the last 7 days. Compose a short, readable weekly digest: outreach sent this week (email vs contact form), new prospects discovered and qualified, sites generated, replies received (interested / not interested / opt-outs), and any failures or items needing manual review. Send it to the owner. If there was no activity this week, say so in one sentence." },
+            "then": "end"
+          }
+        }
+      ]
+    }
+  }
+}

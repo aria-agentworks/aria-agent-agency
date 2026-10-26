@@ -1,0 +1,10 @@
+{
+  "trigger": "Appointment enquiry, confirmed no-show, approved follow-up, or pending coordination event.",
+  "data": "Minimum administrative patient ID, consent, source-confirmed slot/status, approved follow-up date, and responsible staff owner.",
+  "action": "Draft confirmations, rescheduling and approved follow-up tasks; any booking/send requires the practice adapter and approval.",
+  "kpi": "Enquiry-to-confirmed-appointment rate; recovered appointments divided by eligible no-shows; overdue administrative follow-up count.",
+  "aiRules": "Starter Code nodes validate synthetic data and prepare drafts using explicit rules. Included prompts and JSON schemas guide a separately configured, approved AI classification/extraction step; starter rules are not presented as AI execution.",
+  "humanFallback": "Missing, ambiguous, clinical, or high-impact requests go to the designated reception/department owner. Clinical decisions remain with qualified staff.",
+  "logging": "The starter returns a workflow name, correlation ID, status, and audit/action draft. Production adapters must persist event/version/owner/timestamps and communication outcomes in the approved source or log store.",
+  "safety": "Recheck current source status before writes/sends. Use a durable idempotency store keyed to event/record and action; demo flags are not production deduplication. Failed adapters must create an owned exception, not silently retry consequential actions."
+}

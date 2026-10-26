@@ -1,0 +1,48 @@
+{
+  "automation_id": "ca-practice",
+  "enabled": false,
+  "business": {
+    "name": "",
+    "website": "",
+    "location": "",
+    "country": "",
+    "timezone": "",
+    "industry": "accounting",
+    "languages": [],
+    "human_owner": "",
+    "human_transfer_destination": ""
+  },
+  "workflow": {
+    "daily_capacity": 5,
+    "quality_score_threshold": 45,
+    "allowed_actions": [
+      "draft_only"
+    ],
+    "require_human_approval": true,
+    "prevent_duplicate_events": true
+  },
+  "integrations": [
+    {
+      "name": "Firm records / Google Sheets",
+      "required": true,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "Gmail / WhatsApp / Telegram (optional)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    },
+    {
+      "name": "Groq or approved OpenAI-compatible AI (optional)",
+      "required": false,
+      "provider": "",
+      "api_docs_url": "",
+      "credential_values_excluded": true
+    }
+  ],
+  "notes": "Keep workflow inactive until API permissions, consent, privacy/security review, human ownership, error handling, and test approval are complete. Never store API keys in this configuration."
+}

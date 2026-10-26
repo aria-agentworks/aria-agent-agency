@@ -1,0 +1,48 @@
+{
+  "dental-lead-intake": {
+    "lead_id": "DENTAL-DEMO-001",
+    "full_name": "Jamie Lee",
+    "phone": "+15550001001",
+    "department": "Dental desk",
+    "preferred_date": "2030-05-15",
+    "enquiry_text": "I would like a routine consultation.",
+    "source": "demo-form",
+    "consent_status": "granted",
+    "available_slot": {
+      "confirmed": true,
+      "start": "2030-05-15T10:00:00Z",
+      "source": "synthetic-calendar"
+    },
+    "correlation_id": "DEMO-DENTAL-LEAD-001"
+  },
+  "dental-no-show": {
+    "appointment_id": "DENTAL-APPT-001",
+    "patient_name": "Jamie Lee",
+    "phone": "+15550001001",
+    "appointment_date": "2030-05-10",
+    "current_status": "no_show",
+    "already_sent": false,
+    "duplicate_found": false,
+    "consent_status": "granted",
+    "correlation_id": "DEMO-DENTAL-NOSHOW-001"
+  },
+  "dental-discharge-followup": {
+    "patient_id": "DENTAL-PAT-001",
+    "approved_followup": true,
+    "discharge_status": "approved",
+    "approved_followup_date": "2030-05-20",
+    "category": "administrative check-in",
+    "owner": "dental-coordinator",
+    "feedback_rating": 2,
+    "correlation_id": "DEMO-DENTAL-DISCHARGE-001"
+  },
+  "dental-diagnostic-escalation": {
+    "diagnostic_id": "DENTAL-DIAG-001",
+    "patient_id": "DENTAL-PAT-001",
+    "owner": "dental-clinical-review",
+    "review_status": "pending",
+    "test_category": "imaging",
+    "report_text": "",
+    "correlation_id": "DEMO-DENTAL-DIAG-001"
+  }
+}

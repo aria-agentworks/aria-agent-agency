@@ -1,0 +1,103 @@
+{
+  "name": "Invoice status follow-up draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0be6bc10-ba27-4f23-900a-259a38b31143",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"client_id\":\"CLIENT-DEMO-1\",\"invoice_id\":\"INV-DEMO-1\",\"invoice_status\":\"open\",\"partner_approval\":true,\"correlation_id\":\"DEMO-CA-3\"}; const correlation_id = input.correlation_id || 'DEMO-INVOICE-STATUS'; return [{json:{...input, correlation_id, _demo:true, _scenario:'invoice-status'}}];"
+      },
+      "id": "42b67a3d-e761-4082-a0ee-cd2764ee1b38",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const ok=d.invoice_id&&d.invoice_status&&d.client_id&&d.partner_approval===true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Invoice-status follow-up draft approved':'Invoice facts or partner approval missing',action_draft:ok?{table:'Invoices',message:'Draft only: please review invoice status with the firm.',payment:false}:null}}];"
+      },
+      "id": "57db44e9-00be-43e0-abca-7106bf1b099f",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "d395134a-fa19-4a0c-adc4-508f6db5276f",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a2537127-01e5-4a86-a89e-afb8a94e7561",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

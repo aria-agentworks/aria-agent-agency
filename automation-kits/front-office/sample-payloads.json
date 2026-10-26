@@ -1,0 +1,11 @@
+{
+  "front-office-intake": {
+    "record_id": "FO-DEMO-001",
+    "name": "Alex Morgan",
+    "contact": "demo@example.test",
+    "request": "Please tell me your opening hours.",
+    "consent_status": "granted",
+    "owner": "front-office",
+    "correlation_id": "DEMO-FO-001"
+  }
+}

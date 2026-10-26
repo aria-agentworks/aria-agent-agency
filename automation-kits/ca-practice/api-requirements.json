@@ -1,0 +1,48 @@
+{
+  "product": "ca-practice",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Firm records / Google Sheets",
+      "purpose": "Sources Clients, Leads, Documents_Tracker, Compliance_Calendar, Invoices, Query_Log and Error_Log.",
+      "required": true,
+      "clientProvides": [
+        "Firm-owned source/table IDs, APIs, field mapping and data owners",
+        "Partner-approved deadlines, document state and invoice status",
+        "Minimum approved client data and confidentiality review"
+      ],
+      "secretDestination": "Client-owned n8n Credentials vault; no tax/customer records in public inquiry.",
+      "steps": [
+        "Map the table schema using fictional firm records.",
+        "Test lookup misses, stale status and partner approval before any write."
+      ]
+    },
+    {
+      "label": "Gmail / WhatsApp / Telegram (optional)",
+      "purpose": "Captures approved communications and routes human-reviewed drafts/escalations.",
+      "required": false,
+      "clientProvides": [
+        "Provider documentation, business-owned email/WhatsApp identity and allowed scopes",
+        "Partner/team alert destination, consent and message policies"
+      ],
+      "secretDestination": "OAuth/API credentials in firm-owned n8n Credentials.",
+      "steps": [
+        "Add one least-privilege messaging provider at a time.",
+        "Keep outgoing nodes paused until the partner approves the communication."
+      ]
+    },
+    {
+      "label": "Groq or approved OpenAI-compatible AI (optional)",
+      "purpose": "Drafts administrative answers and classifications using only supplied firm facts.",
+      "required": false,
+      "clientProvides": [
+        "Client-selected compatible endpoint/model, data policy and budget owner"
+      ],
+      "secretDestination": "Client n8n Credentials vault only.",
+      "steps": [
+        "Add the provider credential and approved endpoint through documented configuration.",
+        "Test no-advice/no-filing cases and structured-output validation."
+      ]
+    }
+  ]
+}

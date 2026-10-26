@@ -1,0 +1,47 @@
+{
+  "product": "front-office",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "n8n workspace",
+      "purpose": "Imports and runs the inactive workflow starters.",
+      "required": true,
+      "clientProvides": [
+        "Your client-owned n8n URL and workspace owner"
+      ],
+      "secretDestination": "No credential is required to test the synthetic starter.",
+      "steps": [
+        "Import the supplied JSON workflow.",
+        "Run the synthetic test and keep it inactive."
+      ]
+    },
+    {
+      "label": "AI provider (optional)",
+      "purpose": "Adds real extraction/classification after the deterministic demo is understood.",
+      "required": false,
+      "clientProvides": [
+        "Chosen provider/model and account/API documentation",
+        "Approved prompt, data-handling policy, and cost owner"
+      ],
+      "secretDestination": "n8n Credentials vault only.",
+      "steps": [
+        "Create the provider credential in n8n.",
+        "Connect it only after test data and output schema are approved."
+      ]
+    },
+    {
+      "label": "CRM / intake source (production)",
+      "purpose": "Receives approved form events and stores the reviewed handoff.",
+      "required": false,
+      "clientProvides": [
+        "CRM/form name, vendor API documentation, event schema, and permitted scopes",
+        "Named staff queue/owner"
+      ],
+      "secretDestination": "n8n Credentials vault only.",
+      "steps": [
+        "Provide a documented API and least-privilege service account.",
+        "Test a synthetic event, error path, and idempotency check."
+      ]
+    }
+  ]
+}

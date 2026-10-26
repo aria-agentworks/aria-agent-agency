@@ -1,0 +1,15 @@
+{
+  "lead-qualification": {
+    "lead_id": "LEAD-DEMO-001",
+    "full_name": "Taylor Chen",
+    "phone": "+15550001002",
+    "department": "Sales",
+    "enquiry_text": "I need a demo of the reporting plan.",
+    "source": "demo-form",
+    "consent_status": "granted",
+    "available_slot": {
+      "confirmed": false
+    },
+    "correlation_id": "DEMO-LEAD-001"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "trigger": "A client-owned ratebook/customer event, synthetic manual test, or separately approved schedule example: daily 10:30 rate broadcast and 11:00 reminders in Asia/Kolkata.",
+  "data": "Owner-maintained Rates/Subscribers/Scheme/Visits fields, current rate date, opted_in=yes, explicit making-charge/tax settings, approved scheme due date and showroom owner.",
+  "action": "Prepare current-rate, opt-in broadcast/reminder, estimate and staff-owned visit drafts. Reminders require exactly two days before the approved due date. No live sends, investment advice, binding quote, scheme payment or schedule activation.",
+  "kpi": "Rate freshness, staff-approved estimate corrections, opted-in reminder draft eligibility, booked-by-staff visits, duplicate suppression and owned exception count.",
+  "aiRules": "Starter Code nodes validate synthetic data and prepare drafts using explicit rules. Included prompts and JSON schemas guide a separately configured, approved AI classification/extraction step; starter rules are not presented as AI execution.",
+  "humanFallback": "Missing facts, uncertain answers, unsupported actions, and provider failures go to the named business owner’s review queue.",
+  "logging": "The starter returns a workflow name, correlation ID, status, and audit/action draft. Production adapters must persist event/version/owner/timestamps and communication outcomes in the approved source or log store.",
+  "safety": "Recheck current source status before writes/sends. Use a durable idempotency store keyed to event/record and action; demo flags are not production deduplication. Failed adapters must create an owned exception, not silently retry consequential actions."
+}

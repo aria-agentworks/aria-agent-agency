@@ -1,0 +1,41 @@
+{
+  "how_to_run": "Import one workflow, execute manually, and inspect all three Code node outputs.",
+  "cases": [
+    {
+      "id": "lead-qualification-happy-path",
+      "input_file": "sample-payloads.json",
+      "select": "lead-qualification",
+      "expected": [
+        "workflow is inactive",
+        "status is DRAFT_ONLY or NEEDS_HUMAN_REVIEW",
+        "correlation_id is preserved",
+        "no outbound send occurs"
+      ]
+    },
+    {
+      "id": "missing-slot",
+      "change": {
+        "available_slot": {
+          "confirmed": false
+        }
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and no invented appointment"
+    },
+    {
+      "id": "clinical-language",
+      "change": {
+        "enquiry_text": "I have severe pain; diagnose me"
+      },
+      "expect": "NEEDS_HUMAN_REVIEW and no clinical advice"
+    },
+    {
+      "id": "no-show-duplicate",
+      "change": {
+        "current_status": "no_show",
+        "already_sent": true
+      },
+      "expect": "stop before draft send"
+    }
+  ],
+  "production_note": "Add adapter, durable idempotency, credentials, consent, approval, logging, and human fallback before activation."
+}

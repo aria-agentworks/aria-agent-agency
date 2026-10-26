@@ -1,0 +1,180 @@
+{
+  "Prospect": {
+    "type": "object",
+    "properties": {
+      "business_name": {
+        "type": "string",
+        "description": "Official business name from Maps/website"
+      },
+      "niche": {
+        "type": "string",
+        "description": "e.g. dentist, gym, salon, spa"
+      },
+      "location": {
+        "type": "string",
+        "description": "City/area searched"
+      },
+      "website_url": {
+        "type": "string",
+        "description": "Business website URL"
+      },
+      "quality_score": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Website quality score 0-100"
+      },
+      "scraped_data": {
+        "type": "object",
+        "description": "Extracted brand/content data: services, about, phone, address, colors, logo, socials"
+      },
+      "enhanced_site_url": {
+        "type": "string",
+        "description": "Public shareable URL of the generated preview site"
+      },
+      "email": {
+        "type": "string",
+        "description": "Best contact email found on their site"
+      },
+      "outreach_method": {
+        "type": "string",
+        "enum": [
+          "email",
+          "contact_form",
+          "none"
+        ]
+      },
+      "outreach_status": {
+        "type": "string",
+        "enum": [
+          "discovered",
+          "qualified",
+          "failed_scrape",
+          "site_generated",
+          "contacted",
+          "manual_review",
+          "opted_out",
+          "replied"
+        ]
+      },
+      "outreach_date": {
+        "type": "string",
+        "format": "date",
+        "description": "ISO date outreach was sent"
+      },
+      "response_status": {
+        "type": "string",
+        "enum": [
+          "no_response",
+          "replied",
+          "opted_out",
+          "interested",
+          "not_interested"
+        ]
+      },
+      "duplicate_check_key": {
+        "type": "string",
+        "description": "lower(business_name)|domain â€” prevents duplicate outreach"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Failure reasons, personalization hooks"
+      }
+    }
+  },
+  "LeadConfig": {
+    "type": "object",
+    "properties": {
+      "target_location": {
+        "type": "string"
+      },
+      "niches": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "daily_capacity": {
+        "type": "number",
+        "default": 5
+      },
+      "quality_score_threshold": {
+        "type": "number",
+        "default": 45
+      },
+      "enabled": {
+        "type": "boolean",
+        "default": false
+      },
+      "sender_name": {
+        "type": "string"
+      },
+      "sender_email": {
+        "type": "string"
+      },
+      "physical_address": {
+        "type": "string",
+        "description": "Required for CAN-SPAM"
+      },
+      "last_run_date": {
+        "type": "string",
+        "format": "date"
+      }
+    }
+  },
+  "OutreachLog": {
+    "type": "object",
+    "properties": {
+      "prospect_id": {
+        "type": "string"
+      },
+      "method": {
+        "type": "string",
+        "enum": [
+          "email",
+          "contact_form"
+        ]
+      },
+      "message_body": {
+        "type": "string",
+        "description": "Exact outreach text sent"
+      },
+      "sent_at": {
+        "type": "string",
+        "description": "ISO datetime of the send attempt"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "sent",
+          "failed"
+        ]
+      },
+      "error_message": {
+        "type": "string"
+      }
+    }
+  },
+  "GeneratedSite": {
+    "type": "object",
+    "properties": {
+      "prospect_id": {
+        "type": "string"
+      },
+      "html_content": {
+        "type": "string",
+        "description": "Full HTML of the enhanced site"
+      },
+      "public_url": {
+        "type": "string",
+        "description": "Hosted public URL"
+      },
+      "generated_at": {
+        "type": "string"
+      },
+      "version": {
+        "type": "number"
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "input": {
+    "type": "object",
+    "required": [
+      "correlation_id"
+    ]
+  },
+  "output": {
+    "status": [
+      "DRAFT_ONLY",
+      "NEEDS_HUMAN_REVIEW"
+    ],
+    "review_required": "boolean",
+    "correlation_id": "string"
+  },
+  "kit": "realestate",
+  "workflow_contracts": {
+    "channel-normalization": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "broker-viewing": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "followup-guard": {
+      "draft_only": true,
+      "human_approval_required": true
+    }
+  }
+}

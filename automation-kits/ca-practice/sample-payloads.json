@@ -1,0 +1,31 @@
+{
+  "support-newlead": {
+    "client_id": "CLIENT-DEMO-1",
+    "request": "Please confirm which document is outstanding",
+    "owner": "team-demo",
+    "partner_approval": true,
+    "correlation_id": "DEMO-CA-1"
+  },
+  "documents-deadline": {
+    "client_id": "CLIENT-DEMO-1",
+    "document_status": "missing bank statement",
+    "deadline": "2030-03-31",
+    "deadline_approved": true,
+    "owner": "team-demo",
+    "partner_approval": true,
+    "correlation_id": "DEMO-CA-2"
+  },
+  "invoice-status": {
+    "client_id": "CLIENT-DEMO-1",
+    "invoice_id": "INV-DEMO-1",
+    "invoice_status": "open",
+    "partner_approval": true,
+    "correlation_id": "DEMO-CA-3"
+  },
+  "partner-exception": {
+    "exception_type": "missing source record",
+    "owner": "partner-demo",
+    "partner_approval": true,
+    "correlation_id": "DEMO-CA-4"
+  }
+}

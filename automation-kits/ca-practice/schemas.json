@@ -1,0 +1,35 @@
+{
+  "input": {
+    "type": "object",
+    "required": [
+      "correlation_id"
+    ]
+  },
+  "output": {
+    "status": [
+      "DRAFT_ONLY",
+      "NEEDS_HUMAN_REVIEW"
+    ],
+    "review_required": "boolean",
+    "correlation_id": "string"
+  },
+  "kit": "ca",
+  "workflow_contracts": {
+    "support-newlead": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "documents-deadline": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "invoice-status": {
+      "draft_only": true,
+      "human_approval_required": true
+    },
+    "partner-exception": {
+      "draft_only": true,
+      "human_approval_required": true
+    }
+  }
+}

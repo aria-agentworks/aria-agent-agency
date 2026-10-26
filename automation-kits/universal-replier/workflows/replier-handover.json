@@ -1,0 +1,102 @@
+{
+  "name": "Universal Replier | Human handover package",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7f1c2a10-0001-4a11-9e01-1a2b3c4d5e01",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved channel adapter at deployment time.\nconst profile = {\n  business: {\n    name: 'Sunrise Dental Clinic (DEMO)',\n    handover_contact: '+919000000000',\n    emergency_note: 'For emergencies call +919000000001',\n    hours: 'Mon-Sat, 9am-7pm IST'\n  },\n  escalate_on: ['emergency', 'complaint', 'refund', 'asks for a human']\n};\nconst conversation = {\n  name: 'Rahul (demo)',\n  contact: '+919000000003',\n  reason: 'complaint',\n  last_messages: [\n    { from: 'customer', text: 'Worst service ever, nobody called me back!' },\n    { from: 'replier', text: 'I am sorry to hear that. Connecting you with the team now.' }\n  ],\n  fields_collected: { service: 'Cleaning', preferred_time: 'evening' },\n  consent_status: 'granted',\n  channel: 'whatsapp_demo',\n  correlation_id: 'DEMO-UR-HANDOVER-001'\n};\nconst correlation_id = conversation.correlation_id || 'DEMO-UNIVERSAL-REPLIER-HANDOVER-SAMPLE';\nreturn [{ json: { ...conversation, profile, correlation_id, _demo: true, _scenario: 'replier-handover' } }];"
+      },
+      "id": "7f1c2a10-0002-4a11-9e02-1a2b3c4d5e02",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst profile = d.profile || {};\nconst escalateOn = Array.isArray(profile.escalate_on) ? profile.escalate_on : [];\nconst allowedReasons = ['emergency', 'complaint', 'refund', 'human_request', 'unclear', 'off_topic'].concat(escalateOn);\nconst missing = ['contact', 'reason'].filter((key) => !String(d[key] || '').trim());\nconst reasonValid = allowedReasons.includes(String(d.reason || ''));\nconst contactOnFile = Boolean(profile.business && profile.business.handover_contact);\nconst review = missing.length > 0 || !reasonValid || !contactOnFile || !Array.isArray(d.last_messages) || d.last_messages.length === 0;\nreturn [{ json: { ...d, _validation: { status: review ? 'NEEDS_HUMAN_REVIEW' : 'READY', review_required: review, missing, reason: missing.length ? 'Handover data is missing' : !reasonValid ? 'Escalation reason is not on the approved list' : !contactOnFile ? 'No handover contact in the profile' : 'Handover trigger confirmed' } } }];"
+      },
+      "id": "7f1c2a10-0003-4a11-9e03-1a2b3c4d5e03",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || { status: 'NEEDS_HUMAN_REVIEW', review_required: true, reason: 'Validation output missing' };\nconst profile = d.profile || { business: {} };\nconst urgent = d.reason === 'emergency';\nconst transcript = (d.last_messages || []).map((m) => (m.from || 'unknown') + ': ' + (m.text || '')).join(' | ');\nconst package_draft = {\n  send_to: profile.business ? profile.business.handover_contact : 'unlisted',\n  urgency: urgent ? 'high' : 'normal',\n  reason: d.reason || 'unclear',\n  customer: d.name || '',\n  contact: d.contact || '',\n  transcript_summary: transcript.slice(0, 400),\n  fields_collected: d.fields_collected || {},\n  suggested_next: urgent ? 'Call the customer immediately and show the emergency note.' : 'Reply within the promised window with an approved response.',\n  stop_replier: true\n};\nconst correlation_id = d.correlation_id || 'DEMO-UNKNOWN';\nconst audit = { workflow: 'replier-handover', action: 'draft_only', record_id: d.contact || 'sample', correlation_id: correlation_id };\nreturn [{ json: { ...d, status: v.status === 'READY' ? 'DRAFT_ONLY' : 'NEEDS_HUMAN_REVIEW', review_required: v.review_required, reason: v.reason, needs_human: true, handover_package_draft: package_draft, action_draft: { reply: 'Draft only: notify the handover contact and pause automated replies for this conversation.', owner: 'human-review' }, audit } }];"
+      },
+      "id": "7f1c2a10-0004-4a11-9e04-1a2b3c4d5e04",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

@@ -1,0 +1,32 @@
+{
+  "product": "support-assistant",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Knowledge base and helpdesk",
+      "purpose": "Sources approved policy text and an owner-routed ticket.",
+      "required": true,
+      "clientProvides": [
+        "Helpdesk/vendor docs, approved knowledge source, queue owner"
+      ],
+      "secretDestination": "n8n Credentials vault.",
+      "steps": [
+        "Import and run the fictional ticket fixture.",
+        "Connect the approved read/review queue API."
+      ]
+    },
+    {
+      "label": "AI provider (optional)",
+      "purpose": "Drafts a grounded answer using only supplied policy.",
+      "required": false,
+      "clientProvides": [
+        "Provider/model, approved retrieval scope, data policy"
+      ],
+      "secretDestination": "n8n Credentials vault.",
+      "steps": [
+        "Create credential and validate no-answer fixtures.",
+        "Require staff review before any reply is sent."
+      ]
+    }
+  ]
+}

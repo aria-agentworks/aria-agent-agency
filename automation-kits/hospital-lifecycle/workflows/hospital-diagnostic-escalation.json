@@ -1,0 +1,103 @@
+{
+  "name": "Hospital Lifecycle | Pending diagnostic staff escalation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d870b1d9-9d74-445f-8c8d-eb221b9389fd",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"diagnostic_id\":\"HOSP-DIAG-001\",\"patient_id\":\"HOSP-PAT-001\",\"owner\":\"diagnostic-review-team\",\"review_status\":\"pending\",\"test_category\":\"laboratory\",\"report_text\":\"\",\"correlation_id\":\"DEMO-HOSP-DIAG-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-HOSPITAL-DIAGNOSTIC-ESCALATION-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"hospital-diagnostic-escalation\" } }];"
+      },
+      "id": "c857d9f4-a6d7-4b4d-be3c-2b2f00643f02",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [];\nfor (const key of [\"diagnostic_id\", \"patient_id\", \"owner\", \"review_status\"]) if (!String(d[key] || \"\").trim()) missing.push(key);\nconst forbidden = /diagnos|normal|abnormal|cancer|treatment|medication/i.test(String(d.report_text || \"\"));\nconst review = missing.length > 0 || d.review_status !== \"pending\" || forbidden;\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, forbidden_interpretation: forbidden, reason: missing.length ? \"Required diagnostic task data is missing\" : forbidden ? \"Result interpretation is forbidden; clinical staff must review\" : d.review_status !== \"pending\" ? \"Diagnostic state is not pending\" : \"Pending diagnostic staff escalation\"}}}];"
+      },
+      "id": "eada5f11-062e-4d44-b423-a0c86fd0180c",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"hospital-diagnostic-escalation\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: ready ? \"Pending item escalated to staff; no result interpretation\" : v.reason, action_draft: {staff_task: {owner: d.owner, diagnostic_id: d.diagnostic_id, status: \"DRAFT\", instruction: \"Review the pending diagnostic item in the approved clinical system. This workflow does not interpret results.\"}, patient_message: null}, audit}}];"
+      },
+      "id": "da5d7362-8731-44b9-a3c4-2df259c0729a",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b4ad606b-4104-425c-a618-e62a52bb432b",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

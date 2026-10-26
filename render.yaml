@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: aria-agent-agency
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: PUBLIC_SITE_ORIGIN
+        generateValue: true
+      - key: DODO_PAYMENTS_MODE
+        value: test_mode
+      - key: DODO_PAYMENTS_API_KEY
+        sync: false
+      - key: DODO_WEBHOOK_KEY
+        sync: false
+    disk:
+      name: aria-data
+      mountPath: /app/data
+      sizeGB: 1

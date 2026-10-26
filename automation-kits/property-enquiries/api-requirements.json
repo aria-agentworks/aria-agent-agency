@@ -1,0 +1,19 @@
+{
+  "product": "property-enquiries",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Property listing/CRM source",
+      "purpose": "Matches only inventory supplied by the customer’s own system.",
+      "required": true,
+      "clientProvides": [
+        "Listing feed/API docs, CRM, available-fields schema, inventory owner"
+      ],
+      "secretDestination": "n8n Credentials vault.",
+      "steps": [
+        "Import the synthetic enquiry flow.",
+        "Connect a read-only listing adapter and staff viewing queue."
+      ]
+    }
+  ]
+}

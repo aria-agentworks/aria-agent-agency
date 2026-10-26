@@ -1,0 +1,10 @@
+{
+  "trigger": "Lead, no-show, hospital-approved discharge event, or pending diagnostic administration event.",
+  "data": "Minimum approved administrative facts, source-confirmed scheduling/status, consent, approved follow-up instruction, department owner, and event ID.",
+  "action": "Draft appointment/reschedule messages, approved follow-up and service-recovery tasks, and pending-diagnostic staff escalation. No clinical interpretation.",
+  "kpi": "Lead-to-appointment conversion; eligible-no-show recovery rate; overdue approved follow-ups and exception-resolution time, using source records only.",
+  "aiRules": "Starter Code nodes validate synthetic data and prepare drafts using explicit rules. Included prompts and JSON schemas guide a separately configured, approved AI classification/extraction step; starter rules are not presented as AI execution.",
+  "humanFallback": "Missing, ambiguous, clinical, or high-impact requests go to the designated reception/department owner. Clinical decisions remain with qualified staff.",
+  "logging": "The starter returns a workflow name, correlation ID, status, and audit/action draft. Production adapters must persist event/version/owner/timestamps and communication outcomes in the approved source or log store.",
+  "safety": "Recheck current source status before writes/sends. Use a durable idempotency store keyed to event/record and action; demo flags are not production deduplication. Failed adapters must create an owned exception, not silently retry consequential actions."
+}

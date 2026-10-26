@@ -1,0 +1,14 @@
+{
+  "daily-operations-summary": {
+    "reporting_date": "2030-07-01",
+    "metrics": {
+      "new_leads": 12,
+      "open_tasks": 4,
+      "resolved_tickets": 9
+    },
+    "exceptions": [
+      "One adapter response pending"
+    ],
+    "correlation_id": "DEMO-OPS-001"
+  }
+}

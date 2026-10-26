@@ -1,0 +1,103 @@
+{
+  "name": "Dental Desk | No-show verify and duplicate-safe draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "15e65627-85a7-443f-b078-8eab9064aad4",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Synthetic-only preparation. Replace with an approved adapter at deployment time.\nconst input = {\"appointment_id\":\"DENTAL-APPT-001\",\"patient_name\":\"Jamie Lee\",\"phone\":\"+15550001001\",\"appointment_date\":\"2030-05-10\",\"current_status\":\"no_show\",\"already_sent\":false,\"duplicate_found\":false,\"consent_status\":\"granted\",\"correlation_id\":\"DEMO-DENTAL-NOSHOW-001\"};\nconst correlation_id = input.correlation_id || \"DEMO-DENTAL-NO-SHOW-SAMPLE\";\nreturn [{ json: { ...input, correlation_id, _demo: true, _scenario: \"dental-no-show\" } }];"
+      },
+      "id": "4c2ac71b-587e-44b4-a5c3-af9d67ee8089",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst missing = [];\nfor (const key of [\"appointment_id\", \"patient_name\", \"phone\", \"appointment_date\"]) if (!String(d[key] || \"\").trim()) missing.push(key);\nconst stale = d.current_status !== \"no_show\";\nconst duplicate = d.already_sent === true || d.duplicate_found === true;\nconst review = missing.length > 0 || stale || duplicate || d.consent_status !== \"granted\";\nreturn [{json: {...d, _validation: {status: review ? \"NEEDS_HUMAN_REVIEW\" : \"READY\", review_required: review, missing, stale_status: stale, duplicate, reason: missing.length ? \"Required appointment data is missing\" : stale ? \"Appointment status changed; stop\" : duplicate ? \"Recovery message already recorded; stop\" : d.consent_status !== \"granted\" ? \"Consent is not confirmed\" : \"Current no-show status and duplicate check passed\"}}}];"
+      },
+      "id": "795bda19-7025-4517-b85e-69a5776a120f",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $input.first().json;\nconst v = d._validation || {status: \"NEEDS_HUMAN_REVIEW\", review_required: true, reason: \"Validation output missing\"};\nconst correlation_id = d.correlation_id || \"DEMO-UNKNOWN\";\nconst audit = {workflow: \"dental-no-show\", action: \"draft_only\", record_id: d.record_id || d.lead_id || d.appointment_id || d.ticket_id || d.enquiry_id || d.patient_id || \"sample\", correlation_id};\nconst ready = v.status === \"READY\";\nreturn [{json: {...d, status: ready ? \"DRAFT_ONLY\" : \"NEEDS_HUMAN_REVIEW\", review_required: !ready, reason: ready ? \"Draft only; current no-show and duplicate checks passed\" : v.reason, action_draft: {message: ready ? `Draft only: Hi ${d.patient_name}, we noticed the appointment on ${d.appointment_date} was missed. If you would like to reschedule, please contact the coordinator or use the approved options.` : \"Do not send. Verify current status and communication history with staff.\", next_step: ready ? \"Human/provider approval before send\" : \"Human review\"}, audit}}];"
+      },
+      "id": "06049504-d3fe-417a-b76d-aefd63c60214",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "19ebb123-5174-4079-a533-56003f8865dc",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

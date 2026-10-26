@@ -1,0 +1,30 @@
+{
+  "site-score-preview": {
+    "authorized_public_url": true,
+    "threshold": 45,
+    "analyzer_output": {
+      "ok": true,
+      "score": 42,
+      "data": {
+        "business_name": "Demo Studio",
+        "phone": "+15550001002",
+        "emails": [],
+        "services": [
+          "demo service"
+        ]
+      }
+    },
+    "correlation_id": "DEMO-SITE-1"
+  },
+  "outreach-review": {
+    "daily_count": 0,
+    "daily_capacity": 5,
+    "opted_out": false,
+    "sender_name": "Demo Sender",
+    "sender_email": "sender@example.test",
+    "physical_address": "1 Demo Street",
+    "human_review": true,
+    "real_identity_confirmed": true,
+    "correlation_id": "DEMO-SITE-2"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "Rates": {
+    "columns": [
+      "date",
+      "gold_22k",
+      "gold_24k",
+      "silver"
+    ]
+  },
+  "Subscribers": {
+    "columns": [
+      "name",
+      "phone",
+      "opted_in"
+    ]
+  },
+  "Scheme": {
+    "columns": [
+      "name",
+      "phone",
+      "monthly_amount",
+      "paid_months",
+      "total_months",
+      "next_due"
+    ]
+  },
+  "Visits": {
+    "columns": [
+      "visit_id",
+      "name",
+      "phone",
+      "requested_slot",
+      "owner",
+      "staff_approval"
+    ],
+    "note": "Aria-defined template; supplied source did not expose Visits columns."
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "name": "Opt-out and capped repeat follow-up draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "5e7995dd-0344-4899-b025-410889506c33",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"followup_count\":1,\"max_followups\":3,\"opt_out\":false,\"duplicate_found\":false,\"correlation_id\":\"DEMO-RE-3\"}; const correlation_id = input.correlation_id || 'DEMO-FOLLOWUP-GUARD'; return [{json:{...input, correlation_id, _demo:true, _scenario:'followup-guard'}}];"
+      },
+      "id": "35a91ca8-978f-4753-92c3-04f5d2d14743",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const repeats=Number(d.followup_count||0); const ok=d.opt_out!==true&&repeats<Number(d.max_followups||3)&&d.duplicate_found!==true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Capped repeat and opt-out checks passed':'Opt-out, duplicate, or repeat cap blocks follow-up',action_draft:ok?{message:'Draft only: a broker will follow up with source-confirmed details.',attempt:repeats+1}:null}}];"
+      },
+      "id": "4f733de1-b600-4cbb-8eb0-53d9ed4abc5e",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "7f74d6dc-8c05-4893-919d-9b511ea27cb0",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7d3fbfd5-33df-49bb-b2c7-16be01021ecf",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

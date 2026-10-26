@@ -1,0 +1,103 @@
+{
+  "name": "Normalize Meta, WhatsApp, and voice lead payload",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "bccd5bdf-4038-45fa-b042-56672c4934ac",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"source\":\"whatsapp\",\"name\":\"Demo Buyer\",\"contact\":\"+15550001001\",\"enquiry_text\":\"2 bedroom near transit\",\"opt_out\":false,\"correlation_id\":\"DEMO-RE-1\"}; const correlation_id = input.correlation_id || 'DEMO-CHANNEL-NORMALIZATION'; return [{json:{...input, correlation_id, _demo:true, _scenario:'channel-normalization'}}];"
+      },
+      "id": "3de0181c-9576-4182-a85c-6d195ed98805",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const missing=['source','name','contact','enquiry_text'].filter(k=>!String(d[k]||'').trim()); const opted=d.opt_out===true; const review=missing.length>0||opted; return [{json:{...d,_validation:{status:review?'NEEDS_HUMAN_REVIEW':'READY',missing,opted_out:opted,reason:opted?'Opt-out received':missing.length?'Required channel fields missing':'Normalized Meta/WhatsApp/voice lead'}}}];"
+      },
+      "id": "b956ce2d-3c23-436b-afe2-3c9a3b411e96",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "5148042c-1f63-4e97-b21f-270e19ea8895",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d8b5942c-6391-4756-8ad3-f7d2a71f10ee",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

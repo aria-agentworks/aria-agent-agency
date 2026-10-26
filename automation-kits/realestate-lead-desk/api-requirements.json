@@ -1,0 +1,58 @@
+{
+  "product": "realestate-lead-desk",
+  "no_secret_values": true,
+  "client_providers": [
+    {
+      "label": "Meta Lead Ads (optional source)",
+      "purpose": "Supplies configured lead-form webhook events.",
+      "required": false,
+      "clientProvides": [
+        "Business-owned Meta app/page access, lead-form ID, webhook subscription, privacy notice, vendor docs"
+      ],
+      "secretDestination": "Meta token in n8n Credentials; never paste it in this form.",
+      "steps": [
+        "Configure one approved webhook source.",
+        "Test with a synthetic or approved sandbox lead."
+      ]
+    },
+    {
+      "label": "WhatsApp Business (optional channel)",
+      "purpose": "Receives consented inbound messages and optionally routes an approved reply draft.",
+      "required": false,
+      "clientProvides": [
+        "WhatsApp Business/provider account, sender/phone-number ID, approved templates, messaging opt-in"
+      ],
+      "secretDestination": "Client provider/API credential stored in n8n Credentials.",
+      "steps": [
+        "Connect the provider webhook and credential.",
+        "Keep outbound reply nodes inactive pending opt-in and staff approval."
+      ]
+    },
+    {
+      "label": "Property inventory + broker roster",
+      "purpose": "Checks supplied property facts and prepares a human-owned broker/viewing request.",
+      "required": true,
+      "clientProvides": [
+        "Inventory/CRM API docs or approved Sheets table IDs/columns, broker/area mapping, time slots source"
+      ],
+      "secretDestination": "Use least-privilege service credential in n8n Credentials.",
+      "steps": [
+        "Map the read-only property lookup and broker rules.",
+        "Have staff approve every booking before write/send."
+      ]
+    },
+    {
+      "label": "Voice/notifications (optional)",
+      "purpose": "Accepts a configured provider call payload and alerts the assigned broker.",
+      "required": false,
+      "clientProvides": [
+        "Provider (e.g. VAPI/Twilio or client choice), callback/webhook docs, notification destination and transfer owner"
+      ],
+      "secretDestination": "Provider tokens in n8n Credentials; all usage billed to client account.",
+      "steps": [
+        "Confirm provider KYC, permissions, and human-transfer target.",
+        "Exercise a synthetic call and error/handoff case."
+      ]
+    }
+  ]
+}

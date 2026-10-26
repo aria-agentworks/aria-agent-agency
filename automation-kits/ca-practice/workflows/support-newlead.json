@@ -1,0 +1,103 @@
+{
+  "name": "Support/new-lead administrative draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a4813242-e55c-4136-80b2-993a55d22234",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"client_id\":\"CLIENT-DEMO-1\",\"request\":\"Please confirm which document is outstanding\",\"owner\":\"team-demo\",\"partner_approval\":true,\"correlation_id\":\"DEMO-CA-1\"}; const correlation_id = input.correlation_id || 'DEMO-SUPPORT-NEWLEAD'; return [{json:{...input, correlation_id, _demo:true, _scenario:'support-newlead'}}];"
+      },
+      "id": "027f0e87-bf7a-42fd-be93-30b8d4c27b65",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const missing=['client_id','request','owner'].filter(k=>!String(d[k]||'').trim()); const sensitive=/advice|file|tax position|payment/i.test(String(d.request||'')); const ok=!missing.length&&!sensitive&&d.partner_approval===true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Administrative support draft approved':'Missing fields, sensitive professional request, or partner approval',action_draft:ok?{reply:'Draft only: the firm team will review and respond.',log_table:'Query_Log'}:null}}];"
+      },
+      "id": "b5c0ed49-6eeb-43e1-be42-c7702c7d6d46",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "9d5fefe6-b278-4344-9aba-385ca9e9e9d1",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "831082e9-bd6b-4a06-b11f-6f2fe5696949",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

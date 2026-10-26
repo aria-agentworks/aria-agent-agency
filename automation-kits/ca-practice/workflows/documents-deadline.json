@@ -1,0 +1,103 @@
+{
+  "name": "Document tracker and approved deadline draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "966d27dd-a18c-4a76-aaa6-36d9bc5c921a",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = {\"client_id\":\"CLIENT-DEMO-1\",\"document_status\":\"missing bank statement\",\"deadline\":\"2030-03-31\",\"deadline_approved\":true,\"owner\":\"team-demo\",\"partner_approval\":true,\"correlation_id\":\"DEMO-CA-2\"}; const correlation_id = input.correlation_id || 'DEMO-DOCUMENTS-DEADLINE'; return [{json:{...input, correlation_id, _demo:true, _scenario:'documents-deadline'}}];"
+      },
+      "id": "881b2ee0-7194-4153-877d-40008eaaa8d7",
+      "name": "Prepare synthetic input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const fail=(reason)=>({status:'NEEDS_HUMAN_REVIEW',review_required:true,reason,correlation_id:d.correlation_id,action_draft:null});const ok=d.document_status&&d.client_id&&d.owner&&d.deadline_approved===true&&d.partner_approval===true; return [{json:{...d,status:ok?'DRAFT_ONLY':'NEEDS_HUMAN_REVIEW',review_required:!ok,reason:ok?'Document checklist/status and approved deadline draft':'Document status, approved deadline, or partner approval missing',action_draft:ok?{table:'Documents_Tracker',status:d.document_status,deadline:d.deadline,request:'DRAFT_ONLY'}:null}}];"
+      },
+      "id": "49cfe963-44b5-4396-9039-026bd464dfe8",
+      "name": "Validate safety gates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d=$input.first().json; const v=d._validation||d; return [{json:{...d,status:v.status||'NEEDS_HUMAN_REVIEW',review_required:v.review_required!==false,reason:v.reason||'Draft only',action_draft:v.action_draft||d.action_draft||null,correlation_id:d.correlation_id}}];"
+      },
+      "id": "06681a2b-2025-47ef-84fc-0e1a87ca29eb",
+      "name": "Draft action / human handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare synthetic input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare synthetic input": {
+      "main": [
+        [
+          {
+            "node": "Validate safety gates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate safety gates": {
+      "main": [
+        [
+          {
+            "node": "Draft action / human handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "35dc873e-f083-4117-9c48-110e7ac2f18c",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

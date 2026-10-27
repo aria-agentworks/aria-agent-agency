@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { drizzle as drizzleBetterSqlite, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { drizzle as drizzleLibsql, type LibSQLDatabase } from "drizzle-orm/libsql";
+import { createClient as createLibSqlClient } from "@libsql/client";
 import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
@@ -23,9 +25,34 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
-export type AriaDatabase = ReturnType<typeof drizzle>;
+export const schema = {
+  users,
+  storeOrders,
+  storePurchases,
+  storeInquiries,
+  stripeEvents,
+  dodoEvents,
+  storeSubscriptions,
+  newsletterSubscribers,
+  marketingEvents,
+  promoCodes,
+  dodoProductMap,
+  onboardingRequests,
+  growthLeads,
+  growthActivities,
+};
+
+export type AriaDatabase = BetterSQLite3Database<typeof schema>;
 
 let _db: AriaDatabase | null = null;
+
+interface RawDbExecutor {
+  isRemote: boolean;
+  exec(sql: string): Promise<void> | void;
+  run(sql: string, params?: unknown[]): Promise<void> | void;
+  all<T = any>(sql: string, params?: unknown[]): Promise<T[]> | T[];
+  get<T = any>(sql: string, params?: unknown[]): Promise<T | undefined> | (T | undefined);
+}
 
 function resolveDatabaseFile(): string {
   const explicit = process.env.SQLITE_DB_PATH;
@@ -33,10 +60,23 @@ function resolveDatabaseFile(): string {
   return path.resolve(process.cwd(), "data", "aria.sqlite3");
 }
 
-function bootstrapSchema(sqlite: Database.Database) {
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  sqlite.exec(`
+async function bootstrapSchema(executor: RawDbExecutor) {
+  // Turso Hrana rejects PRAGMA journal_mode = WAL. Guard for remote; local file unaffected.
+  if (!executor.isRemote) {
+    try {
+      await executor.exec("PRAGMA journal_mode = WAL;");
+    } catch (e) {
+      console.warn("[Database] PRAGMA journal_mode skipped:", e instanceof Error ? e.message : e);
+    }
+  }
+
+  try {
+    await executor.exec("PRAGMA foreign_keys = ON;");
+  } catch (e) {
+    console.warn("[Database] PRAGMA foreign_keys skipped:", e instanceof Error ? e.message : e);
+  }
+
+  await executor.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       openId TEXT NOT NULL UNIQUE,
@@ -179,7 +219,7 @@ function bootstrapSchema(sqlite: Database.Database) {
       answers TEXT,
       delivery TEXT,
       planId TEXT,
-       status TEXT NOT NULL DEFAULT 'new',
+      status TEXT NOT NULL DEFAULT 'new',
       createdAt INTEGER NOT NULL,
       updatedAt INTEGER NOT NULL
     );
@@ -206,13 +246,13 @@ function bootstrapSchema(sqlite: Database.Database) {
       assessment TEXT,
       opportunityScore INTEGER NOT NULL DEFAULT 0,
       priority TEXT NOT NULL DEFAULT 'warm',
-       pitchAngle TEXT,
-       status TEXT NOT NULL DEFAULT 'new',
-       doNotContact INTEGER NOT NULL DEFAULT 0,
-       doNotContactReason TEXT,
-       lastContactedAt INTEGER,
-       nextContactAt INTEGER,
-       notes TEXT,
+      pitchAngle TEXT,
+      status TEXT NOT NULL DEFAULT 'new',
+      doNotContact INTEGER NOT NULL DEFAULT 0,
+      doNotContactReason TEXT,
+      lastContactedAt INTEGER,
+      nextContactAt INTEGER,
+      notes TEXT,
       createdAt INTEGER NOT NULL,
       updatedAt INTEGER NOT NULL
     );
@@ -235,9 +275,7 @@ function bootstrapSchema(sqlite: Database.Database) {
 
   // Keep the zero-config bootstrap compatible with databases created before
   // the Growth Engine suppression fields were added.
-  const growthColumns = sqlite
-    .prepare("PRAGMA table_info(growth_leads)")
-    .all() as Array<{ name: string }>;
+  const growthColumns = (await executor.all("PRAGMA table_info(growth_leads)")) as Array<{ name: string }>;
   const existing = new Set(growthColumns.map(column => column.name));
   const additions: Array<[string, string]> = [
     ["doNotContact", "INTEGER NOT NULL DEFAULT 0"],
@@ -247,82 +285,81 @@ function bootstrapSchema(sqlite: Database.Database) {
   ];
   for (const [name, definition] of additions) {
     if (!existing.has(name)) {
-      sqlite.exec(`ALTER TABLE growth_leads ADD COLUMN ${name} ${definition}`);
+      await executor.exec(`ALTER TABLE growth_leads ADD COLUMN ${name} ${definition}`);
     }
   }
 }
 
-function autoSeedGrowthLeads(sqlite: Database.Database) {
+async function autoSeedGrowthLeads(executor: RawDbExecutor) {
   try {
-    const row = sqlite.prepare("SELECT COUNT(*) AS count FROM growth_leads").get() as { count: number } | undefined;
-    if (row && row.count > 0) return;
+    const row = await executor.get<{ count: number }>("SELECT COUNT(*) AS count FROM growth_leads");
+    if (row && Number(row.count) > 0) return;
 
-    const insert = sqlite.prepare(`
+    // Use positional parameters (?) rather than named @params for full Hrana / Turso compatibility.
+    // Run sequential idempotent inserts to avoid transaction/rollback failures over remote HTTP.
+    const insertSql = `
       INSERT OR IGNORE INTO growth_leads (
         id, nicheId, businessName, ownerName, website, phone, email, whatsapp,
         instagram, city, country, sourceName, sourceUrl, assessment,
         opportunityScore, priority, pitchAngle, status, doNotContact,
         doNotContactReason, lastContactedAt, nextContactAt, notes, createdAt, updatedAt
       ) VALUES (
-        @id, @nicheId, @businessName, @ownerName, @website, @phone, @email, @whatsapp,
-        @instagram, @city, @country, @sourceName, @sourceUrl, @assessment,
-        @opportunityScore, @priority, @pitchAngle, @status, @doNotContact,
-        @doNotContactReason, @lastContactedAt, @nextContactAt, @notes, @createdAt, @updatedAt
+        ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?
       )
-    `);
+    `;
 
-    const insertMany = sqlite.transaction((items: readonly any[]) => {
-      for (const item of items) {
-        insert.run({
-          id: item.id,
-          nicheId: item.nicheId,
-          businessName: item.businessName,
-          ownerName: item.ownerName ?? null,
-          website: item.website ?? null,
-          phone: item.phone ?? null,
-          email: item.email ?? null,
-          whatsapp: item.whatsapp ?? null,
-          instagram: item.instagram ?? null,
-          city: item.city ?? null,
-          country: item.country ?? 'India',
-          sourceName: item.sourceName ?? 'Public directory',
-          sourceUrl: item.sourceUrl ?? null,
-          assessment: typeof item.assessment === 'string' ? item.assessment : JSON.stringify(item.assessment ?? null),
-          opportunityScore: item.opportunityScore ?? 0,
-          priority: item.priority ?? 'warm',
-          pitchAngle: item.pitchAngle ?? null,
-          status: item.status ?? 'researched',
-          doNotContact: item.doNotContact ?? 0,
-          doNotContactReason: item.doNotContactReason ?? null,
-          lastContactedAt: item.lastContactedAt ?? null,
-          nextContactAt: item.nextContactAt ?? null,
-          notes: item.notes ?? null,
-          createdAt: item.createdAt || Date.now(),
-          updatedAt: item.updatedAt || Date.now(),
-        });
-      }
-    });
+    for (const item of (SEED_LEADS as readonly any[])) {
+      await executor.run(insertSql, [
+        item.id,
+        item.nicheId,
+        item.businessName,
+        item.ownerName ?? null,
+        item.website ?? null,
+        item.phone ?? null,
+        item.email ?? null,
+        item.whatsapp ?? null,
+        item.instagram ?? null,
+        item.city ?? null,
+        item.country ?? 'India',
+        item.sourceName ?? 'Public directory',
+        item.sourceUrl ?? null,
+        typeof item.assessment === 'string' ? item.assessment : JSON.stringify(item.assessment ?? null),
+        item.opportunityScore ?? 0,
+        item.priority ?? 'warm',
+        item.pitchAngle ?? null,
+        item.status ?? 'researched',
+        item.doNotContact ?? 0,
+        item.doNotContactReason ?? null,
+        item.lastContactedAt ?? null,
+        item.nextContactAt ?? null,
+        item.notes ?? null,
+        item.createdAt || Date.now(),
+        item.updatedAt || Date.now(),
+      ]);
+    }
 
-    insertMany(SEED_LEADS);
     console.log(`[Growth] Auto-seeded ${SEED_LEADS.length} researched prospect leads on initial boot.`);
   } catch (error) {
     console.warn("[Growth] Auto-seed skipped:", error instanceof Error ? error.message : error);
   }
 }
 
-function autoSeedAdmin(sqlite: Database.Database) {
+async function autoSeedAdmin(executor: RawDbExecutor) {
   try {
-    const userCount = sqlite.prepare("SELECT COUNT(*) AS count FROM users").get() as { count: number } | undefined;
-    if (userCount && userCount.count > 0) return;
+    const userCount = await executor.get<{ count: number }>("SELECT COUNT(*) AS count FROM users");
+    if (userCount && Number(userCount.count) > 0) return;
 
     const email = process.env.INITIAL_ADMIN_EMAIL?.trim() || "sriraajj@gmail.com";
     const passwordHash = process.env.INITIAL_ADMIN_PASSWORD_HASH?.trim() || "scrypt:8931707ce5977b39284b2bbddf651e05:70f5af308477d7df244cae6c9022ce904fa9a64f74ff2ccc42df9c19c0c1131198f2d79651ee5a761773cd155bb2c503c93a419185cf3108f41053a62569382d";
     const now = Date.now();
 
-    sqlite.prepare(`
+    await executor.run(`
       INSERT INTO users (openId, name, email, passwordHash, loginMethod, role, createdAt, updatedAt, lastSignedIn)
       VALUES (?, ?, ?, ?, 'email', 'admin', ?, ?, ?)
-    `).run(`local_admin_${now}`, "Rajesh / Agency Owner", email, passwordHash, now, now, now);
+    `, [`local_admin_${now}`, "Rajesh / Agency Owner", email, passwordHash, now, now, now]);
 
     console.log(`[Auth] Auto-seeded default admin account (${email}) on initial database boot.`);
   } catch (error) {
@@ -334,29 +371,67 @@ function autoSeedAdmin(sqlite: Database.Database) {
 export async function getDb(): Promise<AriaDatabase | null> {
   if (!_db && process.env.DATABASE_URL !== "disabled") {
     try {
-      const file = resolveDatabaseFile();
-      mkdirSync(path.dirname(file), { recursive: true });
-      const sqlite = new Database(file);
-      bootstrapSchema(sqlite);
-      autoSeedGrowthLeads(sqlite);
-      autoSeedAdmin(sqlite);
-      _db = drizzle({ client: sqlite, schema: {
+      const tursoUrl = process.env.TURSO_DATABASE_URL?.trim();
+      const tursoAuthToken = process.env.TURSO_AUTH_TOKEN?.trim();
 
-        users,
-        storeOrders,
-        storePurchases,
-        storeInquiries,
-        stripeEvents,
-        dodoEvents,
-        storeSubscriptions,
-        newsletterSubscribers,
-        marketingEvents,
-        promoCodes,
-        dodoProductMap,
-        onboardingRequests,
-        growthLeads,
-        growthActivities,
-      } });
+      if (tursoUrl) {
+        // Remote Turso / LibSQL Hrana connection
+        const client = createLibSqlClient({
+          url: tursoUrl,
+          authToken: tursoAuthToken || undefined,
+        });
+
+        const executor: RawDbExecutor = {
+          isRemote: true,
+          async exec(sql: string) {
+            await client.executeMultiple(sql);
+          },
+          async run(sql: string, params: unknown[] = []) {
+            await client.execute({ sql, args: params as any });
+          },
+          async all<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
+            const res = await client.execute({ sql, args: params as any });
+            return res.rows as unknown as T[];
+          },
+          async get<T = any>(sql: string, params: unknown[] = []): Promise<T | undefined> {
+            const res = await client.execute({ sql, args: params as any });
+            return (res.rows[0] as unknown as T) ?? undefined;
+          },
+        };
+
+        await bootstrapSchema(executor);
+        await autoSeedGrowthLeads(executor);
+        await autoSeedAdmin(executor);
+
+        _db = drizzleLibsql({ client, schema }) as unknown as AriaDatabase;
+      } else {
+        // Local SQLite file fallback
+        const file = resolveDatabaseFile();
+        mkdirSync(path.dirname(file), { recursive: true });
+        const sqlite = new Database(file);
+
+        const executor: RawDbExecutor = {
+          isRemote: false,
+          exec(sql: string) {
+            sqlite.exec(sql);
+          },
+          run(sql: string, params: unknown[] = []) {
+            sqlite.prepare(sql).run(...params);
+          },
+          all<T = any>(sql: string, params: unknown[] = []): T[] {
+            return sqlite.prepare(sql).all(...params) as T[];
+          },
+          get<T = any>(sql: string, params: unknown[] = []): T | undefined {
+            return sqlite.prepare(sql).get(...params) as T | undefined;
+          },
+        };
+
+        await bootstrapSchema(executor);
+        await autoSeedGrowthLeads(executor);
+        await autoSeedAdmin(executor);
+
+        _db = drizzleBetterSqlite({ client: sqlite, schema });
+      }
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

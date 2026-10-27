@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import { SEED_LEADS } from "./growthLeadsSeed";
 import {
   dodoEvents,
   dodoProductMap,
@@ -251,6 +252,84 @@ function bootstrapSchema(sqlite: Database.Database) {
   }
 }
 
+function autoSeedGrowthLeads(sqlite: Database.Database) {
+  try {
+    const row = sqlite.prepare("SELECT COUNT(*) AS count FROM growth_leads").get() as { count: number } | undefined;
+    if (row && row.count > 0) return;
+
+    const insert = sqlite.prepare(`
+      INSERT OR IGNORE INTO growth_leads (
+        id, nicheId, businessName, ownerName, website, phone, email, whatsapp,
+        instagram, city, country, sourceName, sourceUrl, assessment,
+        opportunityScore, priority, pitchAngle, status, doNotContact,
+        doNotContactReason, lastContactedAt, nextContactAt, notes, createdAt, updatedAt
+      ) VALUES (
+        @id, @nicheId, @businessName, @ownerName, @website, @phone, @email, @whatsapp,
+        @instagram, @city, @country, @sourceName, @sourceUrl, @assessment,
+        @opportunityScore, @priority, @pitchAngle, @status, @doNotContact,
+        @doNotContactReason, @lastContactedAt, @nextContactAt, @notes, @createdAt, @updatedAt
+      )
+    `);
+
+    const insertMany = sqlite.transaction((items: readonly any[]) => {
+      for (const item of items) {
+        insert.run({
+          id: item.id,
+          nicheId: item.nicheId,
+          businessName: item.businessName,
+          ownerName: item.ownerName ?? null,
+          website: item.website ?? null,
+          phone: item.phone ?? null,
+          email: item.email ?? null,
+          whatsapp: item.whatsapp ?? null,
+          instagram: item.instagram ?? null,
+          city: item.city ?? null,
+          country: item.country ?? 'India',
+          sourceName: item.sourceName ?? 'Public directory',
+          sourceUrl: item.sourceUrl ?? null,
+          assessment: typeof item.assessment === 'string' ? item.assessment : JSON.stringify(item.assessment ?? null),
+          opportunityScore: item.opportunityScore ?? 0,
+          priority: item.priority ?? 'warm',
+          pitchAngle: item.pitchAngle ?? null,
+          status: item.status ?? 'researched',
+          doNotContact: item.doNotContact ?? 0,
+          doNotContactReason: item.doNotContactReason ?? null,
+          lastContactedAt: item.lastContactedAt ?? null,
+          nextContactAt: item.nextContactAt ?? null,
+          notes: item.notes ?? null,
+          createdAt: item.createdAt || Date.now(),
+          updatedAt: item.updatedAt || Date.now(),
+        });
+      }
+    });
+
+    insertMany(SEED_LEADS);
+    console.log(`[Growth] Auto-seeded ${SEED_LEADS.length} researched prospect leads on initial boot.`);
+  } catch (error) {
+    console.warn("[Growth] Auto-seed skipped:", error instanceof Error ? error.message : error);
+  }
+}
+
+function autoSeedAdmin(sqlite: Database.Database) {
+  try {
+    const userCount = sqlite.prepare("SELECT COUNT(*) AS count FROM users").get() as { count: number } | undefined;
+    if (userCount && userCount.count > 0) return;
+
+    const email = process.env.INITIAL_ADMIN_EMAIL?.trim() || "sriraajj@gmail.com";
+    const passwordHash = process.env.INITIAL_ADMIN_PASSWORD_HASH?.trim() || "scrypt:8931707ce5977b39284b2bbddf651e05:70f5af308477d7df244cae6c9022ce904fa9a64f74ff2ccc42df9c19c0c1131198f2d79651ee5a761773cd155bb2c503c93a419185cf3108f41053a62569382d";
+    const now = Date.now();
+
+    sqlite.prepare(`
+      INSERT INTO users (openId, name, email, passwordHash, loginMethod, role, createdAt, updatedAt, lastSignedIn)
+      VALUES (?, ?, ?, ?, 'email', 'admin', ?, ?, ?)
+    `).run(`local_admin_${now}`, "Rajesh / Agency Owner", email, passwordHash, now, now, now);
+
+    console.log(`[Auth] Auto-seeded default admin account (${email}) on initial database boot.`);
+  } catch (error) {
+    console.warn("[Auth] Admin auto-seed skipped:", error instanceof Error ? error.message : error);
+  }
+}
+
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb(): Promise<AriaDatabase | null> {
   if (!_db && process.env.DATABASE_URL !== "disabled") {
@@ -259,7 +338,10 @@ export async function getDb(): Promise<AriaDatabase | null> {
       mkdirSync(path.dirname(file), { recursive: true });
       const sqlite = new Database(file);
       bootstrapSchema(sqlite);
+      autoSeedGrowthLeads(sqlite);
+      autoSeedAdmin(sqlite);
       _db = drizzle({ client: sqlite, schema: {
+
         users,
         storeOrders,
         storePurchases,
